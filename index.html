@@ -4,66 +4,247 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Профиль</title>
+  <title>OnPark</title>
   <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
   <div class="mobile-container">
     <div class="mobile-screen">
-      <!-- Header -->
-      <div class="header">
-        <button class="back-btn">←</button>
-        <span class="header-title">Профиль</span>
-        <button class="close-btn">×</button>
-      </div>
-
-      <!-- Profile Photo Section -->
-      <div class="photo-section">
-        <div class="photo-wrapper">
-          <div class="photo-placeholder" id="avatarPreview">
-            <div class="camera-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                <path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="#9CA3AF"/>
-              </svg>
+      
+      <!-- Welcome Screen -->
+      <div id="welcomeScreen" class="screen active">
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <span class="signal">●●●●</span>
+            <span class="wifi">📶</span>
+            <span class="battery">🔋</span>
+          </div>
+        </div>
+        
+        <div class="welcome-content">
+          <div class="logo">
+            <span class="logo-icon">🌍</span>
+            <span class="logo-text">nPark</span>
+          </div>
+          
+          <div class="illustration">
+            <div class="coffee-circle">
+              <div class="coffee-cup">☕</div>
+              <div class="person person-1">🚶‍♀️</div>
+              <div class="person person-2">🚶‍♂️</div>
+              <div class="item item-1">🏠</div>
+              <div class="item item-2">🌳</div>
+              <div class="item item-3">🚲</div>
+              <div class="item item-4">👔</div>
             </div>
           </div>
-          <input type="file" id="avatar" accept="image/*" hidden>
-          <button class="edit-photo-btn" onclick="document.getElementById('avatar').click()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="white"/>
-            </svg>
-          </button>
+          
+          <div class="welcome-text">
+            <h2>Создавай связи</h2>
+            <p>Сделай свой день ярче!</p>
+          </div>
+          
+          <button class="primary-btn" onclick="showRegistration()">Регистрация</button>
+          
+          <div class="login-link">
+            <span>У вас есть аккаунт:</span>
+            <a href="#" onclick="showLogin()">Войдите</a>
+          </div>
         </div>
-        <div class="photo-text">Фото профиля</div>
-        <div class="photo-subtext">Выберите фото</div>
       </div>
 
-      <!-- Form Section -->
-      <form id="profileForm" class="form-section">
-        <div class="input-group">
-          <input type="text" id="display_name" placeholder="Имя" required>
+      <!-- Registration Screen -->
+      <div id="registrationScreen" class="screen">
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <span class="signal">●●●●</span>
+            <span class="wifi">📶</span>
+            <span class="battery">🔋</span>
+          </div>
         </div>
+        
+        <div class="form-content">
+          <div class="logo-small">
+            <span class="logo-icon">🌍</span>
+            <span class="logo-text">nPark</span>
+          </div>
+          
+          <div class="gender-selection">
+            <div class="gender-option" data-gender="anonymous">
+              <div class="gender-icon">😊</div>
+              <span>Аноним</span>
+              <div class="radio-btn"></div>
+            </div>
+            <div class="gender-option" data-gender="female">
+              <div class="gender-icon">👩</div>
+              <span>Женский</span>
+              <div class="radio-btn"></div>
+            </div>
+            <div class="gender-option" data-gender="male">
+              <div class="gender-icon">👨</div>
+              <span>Мужской</span>
+              <div class="radio-btn"></div>
+            </div>
+          </div>
+          
+          <div class="age-section">
+            <label>Возраст</label>
+            <div class="age-slider">
+              <input type="range" id="ageSlider" min="18" max="65" value="25">
+              <span id="ageValue">25</span>
+            </div>
+          </div>
+          
+          <form id="registrationForm">
+            <input type="text" id="name" placeholder="Имя" required>
+            <input type="text" id="telegram" placeholder="Telegram/email" required>
+            <div class="password-field">
+              <input type="password" id="password" placeholder="Пароль" required>
+              <button type="button" class="show-password">Show</button>
+            </div>
+            
+            <div class="forgot-password">
+              <a href="#">Забыли пароль?</a>
+            </div>
+            
+            <button type="submit" class="primary-btn">Создать профиль</button>
+          </form>
+        </div>
+      </div>
 
-        <div class="input-group">
-          <input type="number" id="age" placeholder="Возраст" required>
+      <!-- Photo Upload Screen -->
+      <div id="photoScreen" class="screen">
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <span class="signal">●●●●</span>
+            <span class="wifi">📶</span>
+            <span class="battery">🔋</span>
+          </div>
         </div>
+        
+        <div class="photo-upload-content">
+          <div class="photo-placeholder-large" id="photoPreview">
+            <div class="photo-icon">🖼️</div>
+          </div>
+          
+          <div class="photo-actions">
+            <button class="photo-btn" onclick="selectPhoto()">Выбрать из галереи</button>
+            <button class="photo-btn secondary" onclick="showInterests()">ОТМЕНА</button>
+          </div>
+          
+          <input type="file" id="photoInput" accept="image/*" hidden>
+        </div>
+      </div>
 
-        <div class="input-group">
-          <input type="text" id="status" placeholder="О себе">
+      <!-- Interests Screen -->
+      <div id="interestsScreen" class="screen">
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <span class="signal">●●●●</span>
+            <span class="wifi">📶</span>
+            <span class="battery">🔋</span>
+          </div>
         </div>
+        
+        <div class="interests-content">
+          <h2>Добавить интересы</h2>
+          
+          <div class="interests-bubbles">
+            <div class="interest-bubble" data-interest="business">Бизнес</div>
+            <div class="interest-bubble selected" data-interest="events">Events</div>
+            <div class="interest-bubble" data-interest="sport">Спорт</div>
+            <div class="interest-bubble" data-interest="content">Сделать Content</div>
+            <div class="interest-bubble selected" data-interest="hiking">Hiking</div>
+            <div class="interest-bubble selected" data-interest="cotravel">co-Travel</div>
+            <div class="interest-bubble selected" data-interest="startup">Стартап</div>
+            <div class="interest-bubble" data-interest="health">ЗОЖ</div>
+            <div class="interest-bubble" data-interest="party">Party</div>
+            <div class="interest-bubble" data-interest="psychology">Психология</div>
+          </div>
+          
+          <button class="primary-btn" onclick="showMap()">Продолжить</button>
+        </div>
+      </div>
 
-        <div class="input-group">
-          <input type="text" id="interests" placeholder="Интересы">
+      <!-- Map Screen -->
+      <div id="mapScreen" class="screen">
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <span class="signal">●●●●</span>
+            <span class="wifi">📶</span>
+            <span class="battery">🔋</span>
+          </div>
         </div>
+        
+        <div class="map-container">
+          <div class="map-area">
+            <div class="map-marker coffee" style="top: 20%; left: 30%;">☕</div>
+            <div class="map-marker coffee" style="top: 40%; left: 70%;">☕</div>
+            <div class="map-marker coffee" style="top: 70%; left: 20%;">☕</div>
+            <div class="map-marker coffee" style="top: 80%; left: 60%;">☕</div>
+            <div class="map-marker user" style="top: 50%; left: 50%;">📍</div>
+          </div>
+          
+          <div class="bottom-nav">
+            <button class="nav-btn">💬</button>
+            <button class="nav-btn">❗</button>
+            <button class="nav-btn active" onclick="showProfile()">👤</button>
+          </div>
+        </div>
+      </div>
 
-        <div class="actions">
-          <button type="submit" class="save-btn">
-            <span class="btn-text">Сохранить</span>
-            <div class="loading-spinner" id="loadingSpinner" style="display: none;"></div>
-          </button>
+      <!-- Profile Screen -->
+      <div id="profileScreen" class="screen">
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <span class="signal">●●●●</span>
+            <span class="wifi">📶</span>
+            <span class="battery">🔋</span>
+          </div>
         </div>
-      </form>
+        
+        <div class="profile-header">
+          <span>Profile</span>
+        </div>
+        
+        <div class="profile-content">
+          <div class="profile-photo">
+            <img src="https://images.unsplash.com/photo-1494790108755-2616c36167e" alt="Profile" id="profileImage">
+          </div>
+          
+          <div class="profile-fields">
+            <div class="profile-field">
+              <span class="field-label">Имя</span>
+              <span class="field-value" id="profileName">Ая</span>
+            </div>
+            <div class="profile-field">
+              <span class="field-label">Telegram</span>
+              <span class="field-value" id="profileTelegram">Yaya2025</span>
+            </div>
+            <div class="profile-field">
+              <span class="field-label">Возраст</span>
+              <span class="field-value" id="profileAge">32</span>
+            </div>
+            <div class="profile-field">
+              <span class="field-label">Интересы</span>
+              <span class="field-value" id="profileInterests">Events со travel стартап</span>
+            </div>
+            <div class="profile-field">
+              <span class="field-label">Пароль</span>
+              <span class="field-value">2025AyaS</span>
+            </div>
+          </div>
+          
+          <button class="back-btn-circle" onclick="showMap()">←</button>
+        </div>
+      </div>
 
       <div id="result" class="result-message"></div>
     </div>
