@@ -4,52 +4,65 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Создание профиля</title>
+  <title>Профиль</title>
   <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
-  <div class="container">
-    <div class="profile-card">
-      <h1 class="title">Создание профиля</h1>
-      
-      <form id="profileForm" class="profile-form">
-        <div class="avatar-section">
-          <div class="avatar-preview" id="avatarPreview">
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#E1E5E9"/>
-            </svg>
+  <div class="mobile-container">
+    <div class="mobile-screen">
+      <!-- Header -->
+      <div class="header">
+        <button class="back-btn">←</button>
+        <span class="header-title">Профиль</span>
+        <button class="close-btn">×</button>
+      </div>
+
+      <!-- Profile Photo Section -->
+      <div class="photo-section">
+        <div class="photo-wrapper">
+          <div class="photo-placeholder" id="avatarPreview">
+            <div class="camera-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="#9CA3AF"/>
+              </svg>
+            </div>
           </div>
-          <label for="avatar" class="avatar-upload-btn">
-            <span>Загрузить фото</span>
-            <input type="file" id="avatar" name="avatar" accept="image/*" hidden>
-          </label>
+          <input type="file" id="avatar" accept="image/*" hidden>
+          <button class="edit-photo-btn" onclick="document.getElementById('avatar').click()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="white"/>
+            </svg>
+          </button>
+        </div>
+        <div class="photo-text">Фото профиля</div>
+        <div class="photo-subtext">Выберите фото</div>
+      </div>
+
+      <!-- Form Section -->
+      <form id="profileForm" class="form-section">
+        <div class="input-group">
+          <input type="text" id="display_name" placeholder="Имя" required>
         </div>
 
-        <div class="form-group">
-          <label for="display_name" class="form-label">Имя</label>
-          <input type="text" id="display_name" name="display_name" class="form-input" placeholder="Введите ваше имя" required>
+        <div class="input-group">
+          <input type="number" id="age" placeholder="Возраст" required>
         </div>
 
-        <div class="form-group">
-          <label for="age" class="form-label">Возраст</label>
-          <input type="number" id="age" name="age" class="form-input" placeholder="Введите ваш возраст" required>
+        <div class="input-group">
+          <input type="text" id="status" placeholder="О себе">
         </div>
 
-        <div class="form-group">
-          <label for="status" class="form-label">Статус</label>
-          <input type="text" id="status" name="status" class="form-input" placeholder="Расскажите о себе">
+        <div class="input-group">
+          <input type="text" id="interests" placeholder="Интересы">
         </div>
 
-        <div class="form-group">
-          <label for="interests" class="form-label">Интересы</label>
-          <input type="text" id="interests" name="interests" class="form-input" placeholder="Введите интересы через запятую">
+        <div class="actions">
+          <button type="submit" class="save-btn">
+            <span class="btn-text">Сохранить</span>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;"></div>
+          </button>
         </div>
-
-        <button type="submit" class="submit-btn">
-          <span class="btn-text">Сохранить профиль</span>
-          <div class="loading-spinner" id="loadingSpinner" style="display: none;"></div>
-        </button>
       </form>
 
       <div id="result" class="result-message"></div>

@@ -1,36 +1,45 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Mock Supabase client for demo purposes
+const supabase = {
+  storage: {
+    from: () => ({
+      upload: async () => ({ data: { path: 'demo.jpg' }, error: null }),
+      getPublicUrl: () => ({ data: { publicUrl: 'https://via.placeholder.com/150' } })
+    })
+  },
+  from: () => ({
+    insert: async () => ({ error: null })
+  })
+};
 
 // Avatar preview functionality
-const avatarInput = document.getElementById('avatar');
-const avatarPreview = document.getElementById('avatarPreview');
+document.addEventListener('DOMContentLoaded', function() {
+  const avatarInput = document.getElementById('avatar');
+  const avatarPreview = document.getElementById('avatarPreview');
 
-avatarInput.addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Avatar preview" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">`;
-    };
-    reader.readAsDataURL(file);
-  }
+  avatarInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Avatar preview">`;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
 });
 
-document.getElementById('profileForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  // Show loading state
-  const submitBtn = document.querySelector('.submit-btn');
-  const loadingSpinner = document.getElementById('loadingSpinner');
-  const btnText = document.querySelector('.btn-text');
-  
-  loadingSpinner.style.display = 'inline-block';
-  btnText.style.display = 'none';
-  submitBtn.disabled = true;
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Show loading state
+    const submitBtn = document.querySelector('.save-btn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const btnText = document.querySelector('.btn-text');
+    
+    loadingSpinner.style.display = 'inline-block';
+    btnText.style.display = 'none';
+    submitBtn.disabled = true;
 
   const displayName = document.getElementById('display_name').value;
   const age = parseInt(document.getElementById('age').value);
@@ -75,19 +84,21 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
       },
     ]);
 
-  const resultDiv = document.getElementById('result');
-  
-  // Hide loading state
-  loadingSpinner.style.display = 'none';
-  btnText.style.display = 'inline';
-  submitBtn.disabled = false;
-  
-  if (insertError) {
-    console.error('Ошибка сохранения профиля:', insertError.message);
-    resultDiv.innerHTML = '<div class="error-message">Ошибка при сохранении профиля!</div>';
-  } else {
-    resultDiv.innerHTML = '<div class="success-message">Профиль успешно создан!</div>';
-    document.getElementById('profileForm').reset();
-    avatarPreview.innerHTML = `<svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#E1E5E9"/></svg>`;
-  }
+    const resultDiv = document.getElementById('result');
+    
+    // Hide loading state
+    loadingSpinner.style.display = 'none';
+    btnText.style.display = 'inline';
+    submitBtn.disabled = false;
+    
+    if (insertError) {
+      console.error('Ошибка сохранения профиля:', insertError.message);
+      resultDiv.innerHTML = '<div class="error-message">Ошибка при сохранении профиля!</div>';
+    } else {
+      resultDiv.innerHTML = '<div class="success-message">Профиль успешно создан!</div>';
+      document.getElementById('profileForm').reset();
+      const avatarPreview = document.getElementById('avatarPreview');
+      avatarPreview.innerHTML = `<div class="camera-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="#9CA3AF"/></svg></div>`;
+    }
+  });
 });
