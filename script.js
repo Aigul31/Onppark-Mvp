@@ -5,34 +5,34 @@ let selectedInterests = [];
 let currentAge = 25;
 
 // Screen Navigation
-function showScreen(screenId) {
+window.showScreen = function(screenId) {
   document.querySelectorAll('.screen').forEach(screen => {
     screen.classList.remove('active');
   });
   document.getElementById(screenId).classList.add('active');
 }
 
-function showRegistration() {
+window.showRegistration = function() {
   showScreen('registrationScreen');
 }
 
-function showLogin() {
+window.showLogin = function() {
   showScreen('registrationScreen');
 }
 
-function showPhoto() {
+window.showPhoto = function() {
   showScreen('photoScreen');
 }
 
-function showInterests() {
+window.showInterests = function() {
   showScreen('interestsScreen');
 }
 
-function showMap() {
+window.showMap = function() {
   showScreen('mapScreen');
 }
 
-function showProfile() {
+window.showProfile = function() {
   showScreen('profileScreen');
 }
 
@@ -150,16 +150,16 @@ document.addEventListener('DOMContentLoaded', function() {
   loadProfileData();
 });
 
-function selectPhoto() {
+window.selectPhoto = function() {
   document.getElementById('photoInput').click();
 }
 
-function showSuccessMessage() {
+window.showSuccessMessage = function() {
   const resultDiv = document.getElementById('result');
   resultDiv.innerHTML = '<div class="success-message">Успешно!<br>Мы вам отправляем ссылку, ожидайте.</div>';
 }
 
-function showPhotoSuccess() {
+window.showPhotoSuccess = function() {
   const photoActions = document.querySelector('.photo-actions');
   photoActions.innerHTML = `
     <div style="text-align: center; color: #007AFF; font-weight: 600; margin-bottom: 16px;">
