@@ -1,16 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>replit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Создание профиля</title>
   <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
-  Hello world
-  <script src="script.js"></script>
+  <div class="container">
+    <div class="profile-card">
+      <h1 class="title">Создание профиля</h1>
+      
+      <form id="profileForm" class="profile-form">
+        <div class="avatar-section">
+          <div class="avatar-preview" id="avatarPreview">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#E1E5E9"/>
+            </svg>
+          </div>
+          <label for="avatar" class="avatar-upload-btn">
+            <span>Загрузить фото</span>
+            <input type="file" id="avatar" name="avatar" accept="image/*" hidden>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label for="display_name" class="form-label">Имя</label>
+          <input type="text" id="display_name" name="display_name" class="form-input" placeholder="Введите ваше имя" required>
+        </div>
+
+        <div class="form-group">
+          <label for="age" class="form-label">Возраст</label>
+          <input type="number" id="age" name="age" class="form-input" placeholder="Введите ваш возраст" required>
+        </div>
+
+        <div class="form-group">
+          <label for="status" class="form-label">Статус</label>
+          <input type="text" id="status" name="status" class="form-input" placeholder="Расскажите о себе">
+        </div>
+
+        <div class="form-group">
+          <label for="interests" class="form-label">Интересы</label>
+          <input type="text" id="interests" name="interests" class="form-input" placeholder="Введите интересы через запятую">
+        </div>
+
+        <button type="submit" class="submit-btn">
+          <span class="btn-text">Сохранить профиль</span>
+          <div class="loading-spinner" id="loadingSpinner" style="display: none;"></div>
+        </button>
+      </form>
+
+      <div id="result" class="result-message"></div>
+    </div>
+  </div>
+
+  <script type="module" src="script.js"></script>
 </body>
 
 </html>
