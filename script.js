@@ -196,6 +196,7 @@ function initializeMap() {
 }
 
 let currentUserStatus = 'coffee'; // Default user status
+let myMarker = null; // User's own marker on map
 
 function setupUserStatusFilters() {
   const filterIcons = document.querySelectorAll('.filter-icon');
@@ -205,10 +206,110 @@ function setupUserStatusFilters() {
       this.classList.add('active');
       currentUserStatus = this.dataset.filter;
       
-      // Show feedback that status was selected
-      showStatusMessage(this.dataset.filter);
+      // Show placement dialog
+      showPlacementDialog(this.dataset.filter);
     });
   });
+}
+
+function showPlacementDialog(status) {
+  const placementPopup = document.createElement('div');
+  placementPopup.className = 'placement-popup';
+  placementPopup.innerHTML = `
+    <div class="placement-content">
+      <h3>Разместить себя на карте</h3>
+      <p>Выбран статус: ${getStatusText(status)}</p>
+      <p>Нажмите на карту, чтобы указать ваше местоположение и стать видимым для других пользователей.</p>
+      <div class="placement-buttons">
+        <button class="placement-btn cancel" onclick="cancelPlacement()">Отмена</button>
+        <button class="placement-btn place" onclick="enableMapPlacement('${status}')">Выбрать место</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(placementPopup);
+}
+
+function cancelPlacement() {
+  const popup = document.querySelector('.placement-popup');
+  if (popup) {
+    document.body.removeChild(popup);
+  }
+}
+
+function enableMapPlacement(status) {
+  cancelPlacement();
+  
+  // Show instruction message
+  const instruction = document.createElement('div');
+  instruction.className = 'map-instruction';
+  instruction.innerHTML = 'Нажмите на карту, чтобы разместить себя';
+  document.body.appendChild(instruction);
+  
+  // Enable map click
+  map.once('click', function(e) {
+    placeUserOnMap(e.latlng, status);
+    document.body.removeChild(instruction);
+  });
+}
+
+function placeUserOnMap(latlng, status) {
+  // Remove previous marker if exists
+  if (myMarker) {
+    map.removeLayer(myMarker);
+  }
+  
+  // Create user's marker
+  const userIcon = L.divIcon({
+    html: `<div style="background: #FF6B6B; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.4); animation: pulse 2s infinite;">${getStatusIcon(status)}</div>`,
+    iconSize: [45, 45],
+    className: 'my-marker'
+  });
+  
+  myMarker = L.marker([latlng.lat, latlng.lng], {icon: userIcon})
+    .addTo(map)
+    .bindPopup('Вы здесь! 👋')
+    .openPopup();
+    
+  // Show success message
+  showSuccessPlacement(status);
+}
+
+function getStatusIcon(status) {
+  const icons = {
+    coffee: '☕',
+    walk: '🚶‍♀️',
+    travel: '✈️'
+  };
+  return icons[status];
+}
+
+function showSuccessPlacement(status) {
+  const message = document.createElement('div');
+  message.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #4CAF50;
+    color: white;
+    padding: 20px 30px;
+    border-radius: 16px;
+    font-size: 18px;
+    z-index: 10000;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    text-align: center;
+  `;
+  message.innerHTML = `
+    <div style="font-size: 40px; margin-bottom: 10px;">🎉</div>
+    <div>Отлично! Теперь вас видят другие пользователи</div>
+  `;
+  
+  document.body.appendChild(message);
+  
+  setTimeout(() => {
+    document.body.removeChild(message);
+  }, 3000);
 }
 
 function showStatusMessage(status) {
@@ -250,7 +351,7 @@ function centerOnUser() {
 function addActiveUsers() {
   const activeUsers = [
     {
-      lat: 43.2240, lng: 76.8530, 
+      lat: 43.2388, lng: 76.8895, // ТРЦ Достык Плаза
       name: 'Айгуль', age: 24, status: 'coffee',
       bio: 'Люблю хороший кофе и интересные беседы',
       avatar: '👩‍💼'
@@ -262,13 +363,13 @@ function addActiveUsers() {
       avatar: '👨‍💻'
     },
     {
-      lat: 43.2180, lng: 76.8520, 
+      lat: 43.2385, lng: 76.8900, // ТРЦ Достык Плаза (рядом)
       name: 'Асем', age: 26, status: 'coffee',
       bio: 'Фотограф, ищу единомышленников',
       avatar: '👩‍🎨'
     },
     {
-      lat: 43.2260, lng: 76.8480, 
+      lat: 43.2390, lng: 76.8892, // ТРЦ Достык Плаза 
       name: 'Нурлан', age: 30, status: 'travel',
       bio: 'Путешественник, планирую поездку в горы',
       avatar: '👨‍🔬'
