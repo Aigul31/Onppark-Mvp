@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OnPark</title>
   <link href="style.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 
 <body>
@@ -185,18 +187,16 @@
         </div>
         
         <div class="map-container">
-          <div class="map-area">
-            <div class="map-marker coffee" style="top: 20%; left: 30%;">☕</div>
-            <div class="map-marker coffee" style="top: 40%; left: 70%;">☕</div>
-            <div class="map-marker coffee" style="top: 70%; left: 20%;">☕</div>
-            <div class="map-marker coffee" style="top: 80%; left: 60%;">☕</div>
-            <div class="map-marker user" style="top: 50%; left: 50%;">📍</div>
-          </div>
+          <div id="map" class="map-area"></div>
           
           <div class="map-filters">
-            <div class="filter-icon active">☕</div>
-            <div class="filter-icon">🚶‍♀️</div>
-            <div class="filter-icon">🌍✈️</div>
+            <div class="filter-icon active" data-filter="coffee">☕</div>
+            <div class="filter-icon" data-filter="walk">🚶‍♀️</div>
+            <div class="filter-icon" data-filter="travel">🌍✈️</div>
+          </div>
+          
+          <div class="location-btn" onclick="centerOnUser()">
+            <span>📍</span>
           </div>
           
           <div class="bottom-nav">
