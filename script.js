@@ -532,8 +532,8 @@ async function addActiveUsers() {
         {
           id: 'user-2',
           lat: 43.2200, lng: 76.8490,
-          display_name: 'Данияр', age: 28, status: 'walk',
-          interests: ['walking', 'fitness'],
+          display_name: 'Stefan', age: 36, status: 'travel',
+          interests: ['hiking', 'co-travel'],
           avatar_url: '👨‍💻'
         },
         {
@@ -553,15 +553,15 @@ async function addActiveUsers() {
         {
           id: 'user-5',
           lat: 43.2300, lng: 76.8600,
-          display_name: 'Дина', age: 22, status: 'walk',
+          display_name: 'Алиса', age: 27, status: 'walk',
           interests: ['walking', 'nature'],
           avatar_url: '👩‍🎓'
         },
         {
           id: 'user-6',
           lat: 43.2150, lng: 76.8400,
-          display_name: 'Ержан', age: 32, status: 'coffee',
-          interests: ['coffee', 'business'],
+          display_name: 'Саша', age: 40, status: 'coffee',
+          interests: ['business', 'events'],
           avatar_url: '👨‍💼'
         }
       ];
@@ -604,8 +604,8 @@ function addMockUsers() {
     {
       id: 'user-2',
       lat: 43.2200, lng: 76.8490,
-      display_name: 'Данияр', age: 28, status: 'walk',
-      interests: ['walking', 'fitness'],
+      display_name: 'Stefan', age: 36, status: 'travel',
+      interests: ['hiking', 'co-travel'],
       avatar_url: '👨‍💻'
     },
     {
@@ -625,15 +625,15 @@ function addMockUsers() {
     {
       id: 'user-5',
       lat: 43.2300, lng: 76.8600,
-      display_name: 'Дина', age: 22, status: 'walk',
+      display_name: 'Алиса', age: 27, status: 'walk',
       interests: ['walking', 'nature'],
       avatar_url: '👩‍🎓'
     },
     {
       id: 'user-6',
       lat: 43.2150, lng: 76.8400,
-      display_name: 'Ержан', age: 32, status: 'coffee',
-      interests: ['coffee', 'business'],
+      display_name: 'Саша', age: 40, status: 'coffee',
+      interests: ['business', 'events'],
       avatar_url: '👨‍💼'
     }
   ];
@@ -652,7 +652,7 @@ function addMockUsers() {
 function getUserIcon(status) {
   const icons = {
     coffee: '☕',
-    walk: '🚶‍♀️',
+    walk: '✈️',
     travel: '✈️'
   };
   
