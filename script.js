@@ -169,7 +169,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Load saved profile data
   loadProfileData();
+  
+  // Load saved language
+  const savedLang = localStorage.getItem('language') || 'ru';
+  setLanguage(savedLang);
 });
+
+// Language Functions
+function setLanguage(lang) {
+  currentLanguage = lang;
+  localStorage.setItem('language', lang);
+  
+  // Update language buttons
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.lang === lang) {
+      btn.classList.add('active');
+    }
+  });
+  
+  // Update all translatable elements
+  updateTranslations();
+}
+
+function updateTranslations() {
+  const elements = document.querySelectorAll('[data-i18n]');
+  elements.forEach(element => {
+    const key = element.getAttribute('data-i18n');
+    if (translations[currentLanguage] && translations[currentLanguage][key]) {
+      element.textContent = translations[currentLanguage][key];
+    }
+  });
+}
+
+function t(key) {
+  return translations[currentLanguage] && translations[currentLanguage][key] 
+    ? translations[currentLanguage][key] 
+    : translations['ru'][key] || key;
+}
 
 // Map and Geolocation Functions
 function initializeMap() {
@@ -197,6 +234,91 @@ function initializeMap() {
 
 let currentUserStatus = 'coffee'; // Default user status
 let myMarker = null; // User's own marker on map
+let currentLanguage = 'ru'; // Default language
+
+// Translation dictionary
+const translations = {
+  ru: {
+    'create-connections': 'Создавай связи',
+    'make-day-brighter': 'Сделай свой день ярче!',
+    'register-btn': 'Регистрация',
+    'have-account': 'У вас есть аккаунт:',
+    'login-link': 'Войдите',
+    'registration-title': 'Регистрация',
+    'name-label': 'Отображаемое имя',
+    'age-label': 'Возраст',
+    'gender-label': 'Пол',
+    'male': 'Мужской',
+    'female': 'Женский',
+    'upload-photo': 'Загрузить фото',
+    'continue-btn': 'Продолжить',
+    'interests-title': 'Выбери свой интерес',
+    'coffee-interest': 'Кофе',
+    'walk-interest': 'Прогулки',
+    'travel-interest': 'Путешествия',
+    'finish-btn': 'Завершить',
+    'map-select': 'Выбрать',
+    'placement-title': 'Разместить себя на карте',
+    'placement-coffee': 'Ищет компанию для кофе ☕',
+    'placement-walk': 'Ищет компанию для прогулки 🚶‍♀️',
+    'placement-travel': 'Ищет компанию для путешествий ✈️',
+    'placement-instruction': 'Нажмите на карту, чтобы указать ваше местоположение и стать видимым для других пользователей.',
+    'cancel-btn': 'Отмена',
+    'select-place': 'Выбрать место',
+    'map-click-instruction': 'Нажмите на карту, чтобы разместить себя',
+    'you-here': 'Вы здесь! 👋',
+    'placement-success': 'Отлично! Теперь вас видят другие пользователи',
+    'profile-btn': '👤 Профиль',
+    'join-company': '🤝 Хочу составить компанию',
+    'anonymous': 'Аноним',
+    'show': 'Показать',
+    'forgot-password': 'Забыли пароль?',
+    'create-profile': 'Создать профиль',
+    'select-from-gallery': 'Выбрать из галереи',
+    'interests-title': 'Добавить интересы',
+    'add-interests': 'Добавить интересы'
+  },
+  en: {
+    'create-connections': 'Create Connections',
+    'make-day-brighter': 'Make your day brighter!',
+    'register-btn': 'Register',
+    'have-account': 'Have an account:',
+    'login-link': 'Sign In',
+    'registration-title': 'Registration',
+    'name-label': 'Display Name',
+    'age-label': 'Age',
+    'gender-label': 'Gender',
+    'male': 'Male',
+    'female': 'Female',
+    'upload-photo': 'Upload Photo',
+    'continue-btn': 'Continue',
+    'interests-title': 'Choose your interest',
+    'coffee-interest': 'Coffee',
+    'walk-interest': 'Walking',
+    'travel-interest': 'Travel',
+    'finish-btn': 'Finish',
+    'map-select': 'Select',
+    'placement-title': 'Place yourself on the map',
+    'placement-coffee': 'Looking for coffee company ☕',
+    'placement-walk': 'Looking for walking company 🚶‍♀️',
+    'placement-travel': 'Looking for travel company ✈️',
+    'placement-instruction': 'Click on the map to indicate your location and become visible to other users.',
+    'cancel-btn': 'Cancel',
+    'select-place': 'Select Place',
+    'map-click-instruction': 'Click on the map to place yourself',
+    'you-here': 'You are here! 👋',
+    'placement-success': 'Great! Now other users can see you',
+    'profile-btn': '👤 Profile',
+    'join-company': '🤝 Join Company',
+    'anonymous': 'Anonymous',
+    'show': 'Show',
+    'forgot-password': 'Forgot password?',
+    'create-profile': 'Create Profile',
+    'select-from-gallery': 'Select from Gallery',
+    'interests-title': 'Add Interests',
+    'add-interests': 'Add Interests'
+  }
+}
 
 function setupUserStatusFilters() {
   const filterIcons = document.querySelectorAll('.filter-icon');
@@ -217,12 +339,12 @@ function showPlacementDialog(status) {
   placementPopup.className = 'placement-popup';
   placementPopup.innerHTML = `
     <div class="placement-content">
-      <h3>Разместить себя на карте</h3>
-      <p>Выбран статус: ${getStatusText(status)}</p>
-      <p>Нажмите на карту, чтобы указать ваше местоположение и стать видимым для других пользователей.</p>
+      <h3>${t('placement-title')}</h3>
+      <p>${t('placement-' + status)}</p>
+      <p>${t('placement-instruction')}</p>
       <div class="placement-buttons">
-        <button class="placement-btn cancel" onclick="cancelPlacement()">Отмена</button>
-        <button class="placement-btn place" onclick="enableMapPlacement('${status}')">Выбрать место</button>
+        <button class="placement-btn cancel" onclick="cancelPlacement()">${t('cancel-btn')}</button>
+        <button class="placement-btn place" onclick="enableMapPlacement('${status}')">${t('select-place')}</button>
       </div>
     </div>
   `;
@@ -243,7 +365,7 @@ function enableMapPlacement(status) {
   // Show instruction message
   const instruction = document.createElement('div');
   instruction.className = 'map-instruction';
-  instruction.innerHTML = 'Нажмите на карту, чтобы разместить себя';
+  instruction.innerHTML = t('map-click-instruction');
   document.body.appendChild(instruction);
   
   // Enable map click
@@ -268,7 +390,7 @@ function placeUserOnMap(latlng, status) {
   
   myMarker = L.marker([latlng.lat, latlng.lng], {icon: userIcon})
     .addTo(map)
-    .bindPopup('Вы здесь! 👋')
+    .bindPopup(t('you-here'))
     .openPopup();
     
   // Show success message
@@ -302,7 +424,7 @@ function showSuccessPlacement(status) {
   `;
   message.innerHTML = `
     <div style="font-size: 40px; margin-bottom: 10px;">🎉</div>
-    <div>Отлично! Теперь вас видят другие пользователи</div>
+    <div>${t('placement-success')}</div>
   `;
   
   document.body.appendChild(message);
@@ -431,10 +553,10 @@ function showUserProfile(user) {
       </div>
       <div class="profile-actions">
         <button class="action-btn profile-btn" onclick="viewFullProfile('${user.name}')">
-          👤 Профиль
+          ${t('profile-btn')}
         </button>
         <button class="action-btn join-btn" onclick="joinCompany('${user.name}')">
-          🤝 Хочу составить компанию
+          ${t('join-company')}
         </button>
       </div>
     </div>

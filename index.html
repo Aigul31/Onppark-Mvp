@@ -25,6 +25,17 @@
           </div>
         </div>
         
+        <div class="language-selector">
+          <button class="lang-btn active" onclick="setLanguage('ru')" data-lang="ru">
+            <span class="flag">🇷🇺</span>
+            <span class="lang-text">РУС</span>
+          </button>
+          <button class="lang-btn" onclick="setLanguage('en')" data-lang="en">
+            <span class="flag">🇺🇸</span>
+            <span class="lang-text">ENG</span>
+          </button>
+        </div>
+        
         <div class="welcome-content">
           <div class="logo">
             <span class="logo-icon">🌍</span>
@@ -44,15 +55,15 @@
           </div>
           
           <div class="welcome-text">
-            <h2>Создавай связи</h2>
-            <p>Сделай свой день ярче!</p>
+            <h2 data-i18n="create-connections">Создавай связи</h2>
+            <p data-i18n="make-day-brighter">Сделай свой день ярче!</p>
           </div>
           
-          <button class="primary-btn" onclick="showRegistration()">Регистрация</button>
+          <button class="primary-btn" onclick="showRegistration()" data-i18n="register-btn">Регистрация</button>
           
           <div class="login-link">
-            <span>У вас есть аккаунт:</span>
-            <a href="#" onclick="showLogin()">Войдите</a>
+            <span data-i18n="have-account">У вас есть аккаунт:</span>
+            <a href="#" onclick="showLogin()" data-i18n="login-link">Войдите</a>
           </div>
         </div>
       </div>
@@ -77,23 +88,23 @@
           <div class="gender-selection">
             <div class="gender-option" data-gender="anonymous">
               <div class="gender-icon">😊</div>
-              <span>Аноним</span>
+              <span data-i18n="anonymous">Аноним</span>
               <div class="radio-btn"></div>
             </div>
             <div class="gender-option" data-gender="female">
               <div class="gender-icon">👩</div>
-              <span>Женский</span>
+              <span data-i18n="female">Женский</span>
               <div class="radio-btn"></div>
             </div>
             <div class="gender-option" data-gender="male">
               <div class="gender-icon">👨</div>
-              <span>Мужской</span>
+              <span data-i18n="male">Мужской</span>
               <div class="radio-btn"></div>
             </div>
           </div>
           
           <div class="age-section">
-            <label>Возраст</label>
+            <label data-i18n="age-label">Возраст</label>
             <div class="age-slider">
               <input type="range" id="ageSlider" min="18" max="65" value="25">
               <span id="ageValue">25</span>
@@ -101,18 +112,18 @@
           </div>
           
           <form id="registrationForm">
-            <input type="text" id="name" placeholder="Имя" required>
+            <input type="text" id="name" placeholder="Имя" data-i18n-placeholder="name-placeholder" required>
             <input type="text" id="telegram" placeholder="Telegram/email" required>
             <div class="password-field">
               <input type="password" id="password" placeholder="Пароль" required>
-              <button type="button" class="show-password">Show</button>
+              <button type="button" class="show-password" data-i18n="show">Show</button>
             </div>
             
             <div class="forgot-password">
-              <a href="#">Забыли пароль?</a>
+              <a href="#" data-i18n="forgot-password">Забыли пароль?</a>
             </div>
             
-            <button type="submit" class="primary-btn">Создать профиль</button>
+            <button type="submit" class="primary-btn" data-i18n="create-profile">Создать профиль</button>
           </form>
         </div>
       </div>
@@ -134,8 +145,8 @@
           </div>
           
           <div class="photo-actions">
-            <button class="photo-btn" onclick="selectPhoto()">Выбрать из галереи</button>
-            <button class="photo-btn secondary" onclick="showInterests()">ОТМЕНА</button>
+            <button class="photo-btn" onclick="selectPhoto()" data-i18n="select-from-gallery">Выбрать из галереи</button>
+            <button class="photo-btn secondary" onclick="showInterests()" data-i18n="cancel-btn">ОТМЕНА</button>
           </div>
           
           <input type="file" id="photoInput" accept="image/*" hidden>
@@ -154,7 +165,7 @@
         </div>
         
         <div class="interests-content">
-          <h2>Добавить интересы</h2>
+          <h2 data-i18n="add-interests">Добавить интересы</h2>
           
           <div class="interests-bubbles">
             <div class="interest-bubble" data-interest="business">Бизнес</div>
@@ -169,7 +180,7 @@
             <div class="interest-bubble" data-interest="psychology">Психология</div>
           </div>
           
-          <button class="primary-btn" onclick="showMap()">Продолжить</button>
+          <button class="primary-btn" onclick="showMap()" data-i18n="continue-btn">Продолжить</button>
         </div>
       </div>
 
@@ -183,7 +194,7 @@
         </div>
         
         <div class="map-header">
-          <button class="map-filter-btn">Выбрать</button>
+          <button class="map-filter-btn" data-i18n="map-select">Выбрать</button>
         </div>
         
         <div class="map-container">
