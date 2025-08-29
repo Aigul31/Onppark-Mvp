@@ -4,36 +4,40 @@ let selectedGender = '';
 let selectedInterests = [];
 let currentAge = 25;
 
-// Screen Navigation
-window.showScreen = function(screenId) {
+// Screen Navigation Functions (must be declared before use)
+function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(screen => {
     screen.classList.remove('active');
   });
   document.getElementById(screenId).classList.add('active');
 }
 
-window.showRegistration = function() {
+function showRegistration() {
   showScreen('registrationScreen');
 }
 
-window.showLogin = function() {
+function showLogin() {
   showScreen('registrationScreen');
 }
 
-window.showPhoto = function() {
+function showPhoto() {
   showScreen('photoScreen');
 }
 
-window.showInterests = function() {
+function showInterests() {
   showScreen('interestsScreen');
 }
 
-window.showMap = function() {
+function showMap() {
   showScreen('mapScreen');
 }
 
-window.showProfile = function() {
+function showProfile() {
   showScreen('profileScreen');
+}
+
+function selectPhoto() {
+  document.getElementById('photoInput').click();
 }
 
 // Gender Selection
@@ -146,20 +150,26 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Map filter functionality
+  const filterIcons = document.querySelectorAll('.filter-icon');
+  
+  filterIcons.forEach(filter => {
+    filter.addEventListener('click', function() {
+      filterIcons.forEach(f => f.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
   // Load saved profile data
   loadProfileData();
 });
 
-window.selectPhoto = function() {
-  document.getElementById('photoInput').click();
-}
-
-window.showSuccessMessage = function() {
+function showSuccessMessage() {
   const resultDiv = document.getElementById('result');
   resultDiv.innerHTML = '<div class="success-message">Успешно!<br>Мы вам отправляем ссылку, ожидайте.</div>';
 }
 
-window.showPhotoSuccess = function() {
+function showPhotoSuccess() {
   const photoActions = document.querySelector('.photo-actions');
   photoActions.innerHTML = `
     <div style="text-align: center; color: #007AFF; font-weight: 600; margin-bottom: 16px;">

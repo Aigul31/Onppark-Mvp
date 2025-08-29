@@ -456,10 +456,25 @@ body {
 }
 
 /* Map Screen */
+.map-header {
+  padding: 16px 20px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.map-filter-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #007AFF;
+  cursor: pointer;
+}
+
 .map-container {
   flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .map-area {
@@ -467,6 +482,40 @@ body {
   background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
   position: relative;
   overflow: hidden;
+}
+
+.map-filters {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 10;
+}
+
+.filter-icon {
+  width: 50px;
+  height: 50px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-icon.active {
+  background: #5CBAA8;
+  color: white;
+  transform: scale(1.1);
+}
+
+.filter-icon:hover {
+  transform: scale(1.05);
 }
 
 .map-marker {
