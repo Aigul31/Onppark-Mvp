@@ -173,7 +173,43 @@ document.addEventListener('DOMContentLoaded', function() {
   // Load saved language
   const savedLang = localStorage.getItem('language') || 'ru';
   setLanguage(savedLang);
+  
+  // Initialize Supabase
+  initializeSupabase();
 });
+
+// Supabase Integration
+function initializeSupabase() {
+  // For browser environment, we'll create a mock Supabase client
+  // In production, you would get these from your server or inject them securely
+  
+  try {
+    // Try to initialize real Supabase if credentials are available
+    // Note: In a real app, you'd inject these securely from your server
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+      // Mock credentials for demo - replace with real ones
+      const mockUrl = 'https://your-project.supabase.co';
+      const mockKey = 'your-anon-key';
+      
+      // Initialize Supabase client (will fail with mock credentials)
+      supabase = window.supabase.createClient(mockUrl, mockKey);
+    }
+  } catch (error) {
+    console.log('Supabase not available, using mock data');
+  }
+  
+  // Set current user (for demo, using a mock user)
+  currentUser = {
+    id: 'current-user-123',
+    display_name: 'Вы',
+    age: 25,
+    status: 'coffee',
+    interests: ['coffee', 'networking'],
+    avatar_url: '👤'
+  };
+  
+  console.log('OnPark initialized with demo data');
+}
 
 // Language Functions
 function setLanguage(lang) {
@@ -235,6 +271,9 @@ function initializeMap() {
 let currentUserStatus = 'coffee'; // Default user status
 let myMarker = null; // User's own marker on map
 let currentLanguage = 'ru'; // Default language
+let supabase; // Supabase client
+let currentUser = null; // Current user data
+let activeConnections = []; // Active connection requests
 
 // Translation dictionary
 const translations = {
@@ -470,43 +509,132 @@ function centerOnUser() {
   map.setView([43.2220, 76.8512], 15);
 }
 
-function addActiveUsers() {
+async function addActiveUsers() {
+  try {
+    // Try to fetch users from Supabase
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .limit(10);
+    
+    let activeUsers;
+    
+    if (error || !profiles || profiles.length === 0) {
+      // Fallback to mock data if Supabase is not available
+      activeUsers = [
+        {
+          id: 'user-1',
+          lat: 43.2380, lng: 76.8520,
+          display_name: 'Айгуль', age: 24, status: 'coffee',
+          interests: ['coffee', 'networking'],
+          avatar_url: '👩‍💼'
+        },
+        {
+          id: 'user-2',
+          lat: 43.2200, lng: 76.8490,
+          display_name: 'Данияр', age: 28, status: 'walk',
+          interests: ['walking', 'fitness'],
+          avatar_url: '👨‍💻'
+        },
+        {
+          id: 'user-3',
+          lat: 43.2385, lng: 76.8525,
+          display_name: 'Асем', age: 26, status: 'coffee',
+          interests: ['coffee', 'photography'],
+          avatar_url: '👩‍🎨'
+        },
+        {
+          id: 'user-4',
+          lat: 43.2382, lng: 76.8522,
+          display_name: 'Нурлан', age: 30, status: 'travel',
+          interests: ['travel', 'adventure'],
+          avatar_url: '👨‍🔬'
+        },
+        {
+          id: 'user-5',
+          lat: 43.2300, lng: 76.8600,
+          display_name: 'Дина', age: 22, status: 'walk',
+          interests: ['walking', 'nature'],
+          avatar_url: '👩‍🎓'
+        },
+        {
+          id: 'user-6',
+          lat: 43.2150, lng: 76.8400,
+          display_name: 'Ержан', age: 32, status: 'coffee',
+          interests: ['coffee', 'business'],
+          avatar_url: '👨‍💼'
+        }
+      ];
+    } else {
+      // Use real Supabase data and add coordinates
+      activeUsers = profiles.map((profile, index) => ({
+        ...profile,
+        lat: 43.2200 + (index * 0.01),
+        lng: 76.8500 + (index * 0.01)
+      }));
+    }
+    
+    // Add markers to map
+    activeUsers.forEach(user => {
+      const icon = getUserIcon(user.status);
+      const marker = L.marker([user.lat, user.lng], {icon: icon})
+        .addTo(markersLayer);
+        
+      marker.on('click', function() {
+        showUserProfile(user);
+      });
+    });
+    
+  } catch (error) {
+    console.error('Error loading users:', error);
+    // Fallback to mock data
+    addMockUsers();
+  }
+}
+
+function addMockUsers() {
   const activeUsers = [
     {
-      lat: 43.2380, lng: 76.8520, // Пересечение Панфилова + Кабанбай Батыра
-      name: 'Айгуль', age: 24, status: 'coffee',
-      bio: 'Люблю хороший кофе и интересные беседы',
-      avatar: '👩‍💼'
+      id: 'user-1',
+      lat: 43.2380, lng: 76.8520,
+      display_name: 'Айгуль', age: 24, status: 'coffee',
+      interests: ['coffee', 'networking'],
+      avatar_url: '👩‍💼'
     },
     {
-      lat: 43.2200, lng: 76.8490, 
-      name: 'Данияр', age: 28, status: 'walk',
-      bio: 'Активный образ жизни, прогулки по городу',
-      avatar: '👨‍💻'
+      id: 'user-2',
+      lat: 43.2200, lng: 76.8490,
+      display_name: 'Данияр', age: 28, status: 'walk',
+      interests: ['walking', 'fitness'],
+      avatar_url: '👨‍💻'
     },
     {
-      lat: 43.2385, lng: 76.8525, // Пересечение Панфилова + Кабанбай Батыра (рядом)
-      name: 'Асем', age: 26, status: 'coffee',
-      bio: 'Фотограф, ищу единомышленников',
-      avatar: '👩‍🎨'
+      id: 'user-3',
+      lat: 43.2385, lng: 76.8525,
+      display_name: 'Асем', age: 26, status: 'coffee',
+      interests: ['coffee', 'photography'],
+      avatar_url: '👩‍🎨'
     },
     {
-      lat: 43.2382, lng: 76.8522, // Пересечение Панфилова + Кабанбай Батыра
-      name: 'Нурлан', age: 30, status: 'travel',
-      bio: 'Путешественник, планирую поездку в горы',
-      avatar: '👨‍🔬'
+      id: 'user-4',
+      lat: 43.2382, lng: 76.8522,
+      display_name: 'Нурлан', age: 30, status: 'travel',
+      interests: ['travel', 'adventure'],
+      avatar_url: '👨‍🔬'
     },
     {
-      lat: 43.2300, lng: 76.8600, 
-      name: 'Дина', age: 22, status: 'walk',
-      bio: 'Студентка, люблю пешие прогулки',
-      avatar: '👩‍🎓'
+      id: 'user-5',
+      lat: 43.2300, lng: 76.8600,
+      display_name: 'Дина', age: 22, status: 'walk',
+      interests: ['walking', 'nature'],
+      avatar_url: '👩‍🎓'
     },
     {
-      lat: 43.2150, lng: 76.8400, 
-      name: 'Ержан', age: 32, status: 'coffee',
-      bio: 'Предприниматель, обожаю кофейни',
-      avatar: '👨‍💼'
+      id: 'user-6',
+      lat: 43.2150, lng: 76.8400,
+      display_name: 'Ержан', age: 32, status: 'coffee',
+      interests: ['coffee', 'business'],
+      avatar_url: '👨‍💼'
     }
   ];
   
@@ -538,24 +666,27 @@ function getUserIcon(status) {
 function showUserProfile(user) {
   const profilePopup = document.createElement('div');
   profilePopup.className = 'user-profile-popup';
+  
+  const interests = Array.isArray(user.interests) ? user.interests.join(', ') : user.interests || 'Не указано';
+  
   profilePopup.innerHTML = `
     <div class="profile-popup-content">
       <div class="profile-header">
-        <span class="profile-avatar">${user.avatar}</span>
+        <span class="profile-avatar">${user.avatar_url || user.avatar || '👤'}</span>
         <div class="profile-info">
-          <h3>${user.name}, ${user.age}</h3>
+          <h3>${user.display_name || user.name}, ${user.age}</h3>
           <p class="profile-status">${getStatusText(user.status)}</p>
         </div>
         <button class="close-profile" onclick="closeUserProfile()">×</button>
       </div>
       <div class="profile-bio">
-        <p>${user.bio}</p>
+        <p><strong>Интересы:</strong> ${interests}</p>
       </div>
       <div class="profile-actions">
-        <button class="action-btn profile-btn" onclick="viewFullProfile('${user.name}')">
+        <button class="action-btn profile-btn" onclick="viewFullProfile('${user.id}')">
           ${t('profile-btn')}
         </button>
-        <button class="action-btn join-btn" onclick="joinCompany('${user.name}')">
+        <button class="action-btn join-btn" onclick="joinCompany('${user.id}', '${user.display_name || user.name}')">
           ${t('join-company')}
         </button>
       </div>
@@ -581,15 +712,399 @@ function closeUserProfile() {
   }
 }
 
-function viewFullProfile(userName) {
-  alert(`Просмотр полного профиля: ${userName}`);
-  closeUserProfile();
+async function viewFullProfile(userId) {
+  try {
+    // Try to get full profile from Supabase
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      alert('Профиль недоступен');
+      return;
+    }
+    
+    closeUserProfile();
+    
+    // Show full profile modal
+    const fullProfilePopup = document.createElement('div');
+    fullProfilePopup.className = 'user-profile-popup';
+    fullProfilePopup.innerHTML = `
+      <div class="profile-popup-content">
+        <div class="profile-header">
+          <span class="profile-avatar">${profile.avatar_url || '👤'}</span>
+          <div class="profile-info">
+            <h3>${profile.display_name}, ${profile.age}</h3>
+            <p class="profile-status">${getStatusText(profile.status)}</p>
+          </div>
+          <button class="close-profile" onclick="closeUserProfile()">×</button>
+        </div>
+        <div class="profile-bio">
+          <p><strong>Интересы:</strong> ${Array.isArray(profile.interests) ? profile.interests.join(', ') : profile.interests || 'Не указано'}</p>
+          <p><strong>О себе:</strong> Активный пользователь OnPark</p>
+        </div>
+        <div class="profile-actions">
+          <button class="action-btn join-btn" onclick="joinCompany('${profile.id}', '${profile.display_name}')">
+            ${t('join-company')}
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(fullProfilePopup);
+    
+  } catch (error) {
+    console.error('Error loading profile:', error);
+    alert('Ошибка загрузки профиля');
+  }
 }
 
-function joinCompany(userName) {
-  alert(`Отправлен запрос на присоединение к ${userName}!`);
-  closeUserProfile();
+async function joinCompany(userId, userName) {
+  try {
+    closeUserProfile();
+    
+    // Check if connection already exists
+    const { data: existingConnection, error: checkError } = await supabase
+      .from('connections')
+      .select('*')
+      .eq('from_user', currentUser.id)
+      .eq('to_user', userId)
+      .single();
+    
+    if (existingConnection) {
+      alert('Запрос уже отправлен!');
+      return;
+    }
+    
+    // Create new connection request
+    const { data: connection, error: connectionError } = await supabase
+      .from('connections')
+      .insert([
+        {
+          from_user: currentUser.id,
+          to_user: userId,
+          status: 'pending'
+        }
+      ])
+      .select()
+      .single();
+    
+    if (connectionError) {
+      console.error('Connection error:', connectionError);
+      // Fallback for demo
+      createMockConnection(userId, userName);
+      return;
+    }
+    
+    // Add to active connections
+    activeConnections.push({
+      id: connection.id,
+      to_user: userId,
+      to_user_name: userName,
+      status: 'pending'
+    });
+    
+    // Send initial message
+    await sendInitialMessage(userId, userName);
+    
+    // Show success and enable chat
+    showConnectionSuccess(userName);
+    
+  } catch (error) {
+    console.error('Error creating connection:', error);
+    createMockConnection(userId, userName);
+  }
 }
+
+function createMockConnection(userId, userName) {
+  // Fallback for when Supabase is not available
+  const connectionId = 'mock-conn-' + Date.now();
+  
+  activeConnections.push({
+    id: connectionId,
+    to_user: userId,
+    to_user_name: userName,
+    status: 'pending'
+  });
+  
+  sendMockInitialMessage(userId, userName);
+  showConnectionSuccess(userName);
+}
+
+async function sendInitialMessage(userId, userName) {
+  try {
+    const initialMessage = currentLanguage === 'en' 
+      ? 'Hi! I want to join your company!' 
+      : 'Привет! Я хочу составить компанию!';
+    
+    const { data: message, error } = await supabase
+      .from('messages')
+      .insert([
+        {
+          from_user: currentUser.id,
+          to_user: userId,
+          message: initialMessage
+        }
+      ]);
+    
+    if (error) {
+      console.error('Message error:', error);
+    }
+    
+  } catch (error) {
+    console.error('Error sending message:', error);
+  }
+}
+
+function sendMockInitialMessage(userId, userName) {
+  // Mock message for demo
+  console.log(`Mock message sent to ${userName}: Привет! Я хочу составить компанию!`);
+}
+
+function showConnectionSuccess(userName) {
+  // Show success message
+  const message = document.createElement('div');
+  message.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #4CAF50;
+    color: white;
+    padding: 20px 30px;
+    border-radius: 16px;
+    font-size: 18px;
+    z-index: 10000;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    text-align: center;
+  `;
+  
+  const successText = currentLanguage === 'en' 
+    ? `Request sent to ${userName}!`
+    : `Запрос отправлен ${userName}!`;
+  
+  message.innerHTML = `
+    <div style="font-size: 40px; margin-bottom: 10px;">🤝</div>
+    <div>${successText}</div>
+  `;
+  
+  document.body.appendChild(message);
+  
+  setTimeout(() => {
+    document.body.removeChild(message);
+  }, 3000);
+  
+  // Enable chat icon
+  enableChatIcon();
+}
+
+function enableChatIcon() {
+  // Update chat icon to show active state
+  const chatBtn = document.querySelector('#chatBtn');
+  if (chatBtn) {
+    chatBtn.style.background = '#4CAF50';
+    chatBtn.style.color = 'white';
+    chatBtn.style.transform = 'scale(1.1)';
+    chatBtn.onclick = openChat;
+  }
+}
+
+// Chat System
+let currentChatUser = null;
+let chatMessages = [];
+
+function openChat() {
+  if (activeConnections.length === 0) {
+    alert('Нет активных соединений для чата');
+    return;
+  }
+  
+  // Use first active connection for demo
+  const connection = activeConnections[0];
+  currentChatUser = {
+    id: connection.to_user,
+    name: connection.to_user_name
+  };
+  
+  // Set chat header info
+  document.getElementById('chatAvatar').textContent = '👤';
+  document.getElementById('chatUserName').textContent = currentChatUser.name;
+  
+  // Load existing messages
+  loadChatMessages();
+  
+  // Show chat screen
+  showScreen('chatScreen');
+}
+
+async function loadChatMessages() {
+  try {
+    const { data: messages, error } = await supabase
+      .from('messages')
+      .select('*')
+      .or(`and(from_user.eq.${currentUser.id},to_user.eq.${currentChatUser.id}),and(from_user.eq.${currentChatUser.id},to_user.eq.${currentUser.id})`)
+      .order('created_at', { ascending: true });
+    
+    if (error) {
+      console.error('Error loading messages:', error);
+      // Use mock messages for demo
+      loadMockMessages();
+      return;
+    }
+    
+    chatMessages = messages;
+    renderChatMessages();
+    
+  } catch (error) {
+    console.error('Error loading messages:', error);
+    loadMockMessages();
+  }
+}
+
+function loadMockMessages() {
+  chatMessages = [
+    {
+      id: 1,
+      from_user: currentUser.id,
+      to_user: currentChatUser.id,
+      message: 'Привет! Я хочу составить компанию!',
+      created_at: new Date(Date.now() - 10000).toISOString()
+    },
+    {
+      id: 2,
+      from_user: currentChatUser.id,
+      to_user: currentUser.id,
+      message: 'Привет! Конечно, давайте встретимся!',
+      created_at: new Date(Date.now() - 5000).toISOString()
+    }
+  ];
+  renderChatMessages();
+}
+
+function renderChatMessages() {
+  const chatContainer = document.getElementById('chatMessages');
+  chatContainer.innerHTML = '';
+  
+  chatMessages.forEach(msg => {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = msg.from_user === currentUser.id ? 'message sent' : 'message received';
+    
+    const time = new Date(msg.created_at).toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    messageDiv.innerHTML = `
+      <div class="message-bubble">${msg.message}</div>
+      <div class="message-time">${time}</div>
+    `;
+    
+    chatContainer.appendChild(messageDiv);
+  });
+  
+  // Scroll to bottom
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const messageText = input.value.trim();
+  
+  if (!messageText) return;
+  
+  // Clear input
+  input.value = '';
+  
+  try {
+    // Try to save to Supabase
+    const { data: message, error } = await supabase
+      .from('messages')
+      .insert([
+        {
+          from_user: currentUser.id,
+          to_user: currentChatUser.id,
+          message: messageText
+        }
+      ])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error sending message:', error);
+      // Fallback to mock message
+      addMockMessage(messageText);
+      return;
+    }
+    
+    // Add to local messages
+    chatMessages.push(message);
+    renderChatMessages();
+    
+    // Simulate response after a delay
+    setTimeout(() => {
+      simulateResponse();
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Error sending message:', error);
+    addMockMessage(messageText);
+  }
+}
+
+function addMockMessage(messageText) {
+  const mockMessage = {
+    id: Date.now(),
+    from_user: currentUser.id,
+    to_user: currentChatUser.id,
+    message: messageText,
+    created_at: new Date().toISOString()
+  };
+  
+  chatMessages.push(mockMessage);
+  renderChatMessages();
+  
+  // Simulate response
+  setTimeout(() => {
+    simulateResponse();
+  }, 2000);
+}
+
+function simulateResponse() {
+  const responses = [
+    'Отлично! Где встретимся?',
+    'Согласен! Когда удобно?',
+    'Хорошая идея! Я готов.',
+    'Звучит здорово! Жду встречи.',
+    'Давайте обсудим детали!'
+  ];
+  
+  const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+  
+  const responseMessage = {
+    id: Date.now() + 1,
+    from_user: currentChatUser.id,
+    to_user: currentUser.id,
+    message: randomResponse,
+    created_at: new Date().toISOString()
+  };
+  
+  chatMessages.push(responseMessage);
+  renderChatMessages();
+}
+
+// Allow sending message with Enter key
+document.addEventListener('DOMContentLoaded', function() {
+  const messageInput = document.getElementById('messageInput');
+  if (messageInput) {
+    messageInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  }
+});
 
 function showSuccessMessage() {
   const resultDiv = document.getElementById('result');

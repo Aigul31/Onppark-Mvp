@@ -8,6 +8,11 @@
   <link href="style.css" rel="stylesheet" type="text/css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    // Make environment variables available to the script (this won't work in browser)
+    // We'll handle environment variables in the main script
+  </script>
 </head>
 
 <body>
@@ -211,7 +216,7 @@
           </div>
           
           <div class="bottom-nav">
-            <button class="nav-btn">💬</button>
+            <button class="nav-btn" id="chatBtn">💬</button>
             <button class="nav-btn">❗</button>
             <button class="nav-btn active" onclick="showProfile()">👤</button>
           </div>
@@ -262,6 +267,34 @@
           </div>
           
           <button class="back-btn-circle" onclick="showMap()">←</button>
+        </div>
+      </div>
+
+      <!-- Chat Screen -->
+      <div id="chatScreen" class="screen">
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <span class="signal">●●●●</span>
+          </div>
+        </div>
+        
+        <div class="chat-header">
+          <button class="back-btn" onclick="showMap()">←</button>
+          <div class="chat-user-info">
+            <span class="chat-avatar" id="chatAvatar">👤</span>
+            <span class="chat-name" id="chatUserName">Пользователь</span>
+          </div>
+          <button class="more-btn">⋮</button>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+          <!-- Messages will be dynamically added here -->
+        </div>
+        
+        <div class="chat-input-container">
+          <input type="text" id="messageInput" placeholder="Написать сообщение..." />
+          <button class="send-btn" onclick="sendMessage()">→</button>
         </div>
       </div>
 
