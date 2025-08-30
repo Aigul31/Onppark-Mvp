@@ -659,7 +659,6 @@ function showMessages() {
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.classList.remove('active');
   });
-  document.getElementById('chatBtn').classList.add('active');
   
   // Load confirmed profiles
   loadConfirmedProfiles();
@@ -687,7 +686,7 @@ function loadConfirmedProfiles() {
   confirmedProfiles.forEach(profile => {
     const messageItem = document.createElement('div');
     messageItem.className = 'message-item';
-    messageItem.onclick = () => openChat(profile);
+    messageItem.onclick = () => openIndividualChat(profile);
     
     // Исправляем отображение аватарки - берем правильную из профиля
     const avatarContent = profile.avatar_url && profile.avatar_url.includes('attached_assets')
@@ -1106,6 +1105,37 @@ function initializePendingConnections() {
 // Initialize demo notifications on page load
 setTimeout(initializePendingConnections, 2000);
 
+function openIndividualChat(profile) {
+  currentChatUser = profile;
+  showScreen('chatScreen');
+  
+  // Update chat header with user info and photo
+  updateChatHeader(profile);
+  
+  // Load chat messages for this user
+  loadChatMessages();
+}
+
+function updateChatHeader(profile) {
+  const chatUserName = document.getElementById('chatUserName');
+  const chatAvatar = document.getElementById('chatAvatar');
+  
+  if (chatUserName) {
+    chatUserName.textContent = `${profile.display_name}, ${profile.age}`;
+  }
+  
+  // Update avatar in chat header with actual image
+  if (chatAvatar && profile.avatar_url && profile.avatar_url.includes('attached_assets')) {
+    // Replace the span with an img element
+    const avatarImg = document.createElement('img');
+    avatarImg.id = 'chatAvatar';
+    avatarImg.className = 'chat-avatar';
+    avatarImg.src = profile.avatar_url;
+    avatarImg.style.cssText = 'width: 30px; height: 30px; border-radius: 50%; object-fit: cover;';
+    chatAvatar.parentNode.replaceChild(avatarImg, chatAvatar);
+  }
+}
+
 function openChat() {
   if (activeConnections.length === 0) {
     alert('Нет активных соединений для чата');
@@ -1305,33 +1335,13 @@ function renderNotifications() {
   const container = document.getElementById('notificationsContent');
   container.innerHTML = '';
   
-  // Add map button at the top
-  const mapButtonDiv = document.createElement('div');
-  mapButtonDiv.style.cssText = 'text-align: center; padding: 20px;';
-  mapButtonDiv.innerHTML = `
-    <button onclick="showScreen('mapScreen')" style="
-      background: #5CBAA8;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 20px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-bottom: 20px;
-    ">
-      🗺️ Карта
-    </button>
-  `;
-  container.appendChild(mapButtonDiv);
-  
   if (pendingConnections.length === 0) {
-    const emptyDiv = document.createElement('div');
-    emptyDiv.style.cssText = 'text-align: center; padding: 40px; color: #666;';
-    emptyDiv.innerHTML = `
-      <div style="font-size: 50px; margin-bottom: 20px;">📭</div>
-      <p>Пока нет уведомлений</p>
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #666;">
+        <div style="font-size: 50px; margin-bottom: 20px;">📭</div>
+        <p>Пока нет уведомлений</p>
+      </div>
     `;
-    container.appendChild(emptyDiv);
     return;
   }
   
@@ -1383,8 +1393,13 @@ function acceptConnection(connectionId) {
   // Re-render notifications
   renderNotifications();
   
-  // Show success message
+  // Show success message and redirect to messages
   showConnectionAccepted(connection.from_user_name);
+  
+  // Auto-redirect to messages after 2 seconds
+  setTimeout(() => {
+    showMessages();
+  }, 2000);
 }
 
 function rejectConnection(connectionId) {
