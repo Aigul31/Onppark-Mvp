@@ -170,8 +170,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   filterIcons.forEach(filter => {
     filter.addEventListener('click', function() {
-      filterIcons.forEach(f => f.classList.remove('active'));
-      this.classList.add('active');
+      const filterType = this.dataset.filter;
+      updateMapFilter(filterType);
     });
   });
 
@@ -294,6 +294,7 @@ function initializeMap() {
 }
 
 let currentUserStatus = 'coffee'; // Default user status
+let currentFilter = 'all'; // Current filter: 'all', 'coffee', 'walk', 'travel'
 let myMarker = null; // User's own marker on map
 let currentLanguage = 'ru'; // Default language
 let supabase; // Supabase client
@@ -568,16 +569,8 @@ async function addActiveUsers() {
     // Store users data globally
     allUsersData = activeUsers;
     
-    // Add markers to map
-    activeUsers.forEach(user => {
-      const icon = getUserIcon(user.status || 'coffee');
-      const marker = L.marker([user.lat, user.lng], {icon: icon})
-        .addTo(markersLayer);
-        
-      marker.on('click', function() {
-        showUserProfile(user);
-      });
-    });
+    // Add markers to map with status filtering
+    displayFilteredUsers(activeUsers);
     
   } catch (error) {
     console.error('Error loading users:', error);
@@ -585,15 +578,7 @@ async function addActiveUsers() {
     const mockUsers = getMockUsers();
     allUsersData = mockUsers;
     
-    mockUsers.forEach(user => {
-      const icon = getUserIcon(user.status);
-      const marker = L.marker([user.lat, user.lng], {icon: icon})
-        .addTo(markersLayer);
-        
-      marker.on('click', function() {
-        showUserProfile(user);
-      });
-    });
+    displayFilteredUsers(mockUsers);
   }
 }
 
@@ -623,11 +608,47 @@ function getMockUsers() {
         {
           id: 'user-4',
           lat: 43.2150, lng: 76.8400,
-          display_name: 'Sasha', age: 40, status: 'coffee',
-          interests: ['business', 'events'],
+          display_name: 'Sasha', age: 40, status: 'travel',
+          interests: ['business', 'travel'],
           avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
         }
       ];
+}
+
+// Display users based on current filter
+function displayFilteredUsers(users) {
+  // Clear existing markers
+  markersLayer.clearLayers();
+  
+  // Filter users based on current filter
+  const filteredUsers = currentFilter === 'all' 
+    ? users 
+    : users.filter(user => user.status === currentFilter);
+  
+  // Add markers for filtered users
+  filteredUsers.forEach(user => {
+    const icon = getUserIcon(user.status || 'coffee');
+    const marker = L.marker([user.lat, user.lng], {icon: icon})
+      .addTo(markersLayer);
+      
+    marker.on('click', function() {
+      showUserProfile(user);
+    });
+  });
+}
+
+// Update map filter
+function updateMapFilter(filter) {
+  currentFilter = filter;
+  
+  // Update filter button states
+  document.querySelectorAll('.filter-icon').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+  
+  // Re-display users with new filter
+  displayFilteredUsers(allUsersData);
 }
 
 function addMockUsers() {
