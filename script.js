@@ -601,43 +601,29 @@ function getMockUsers() {
   return [
         {
           id: 'user-1',
-          lat: 43.2380, lng: 76.8520,
-          display_name: 'Айгуль', age: 24, status: 'coffee',
-          interests: ['coffee', 'networking'],
-          avatar_url: '👩‍💼'
-        },
-        {
-          id: 'user-2',
           lat: 43.2200, lng: 76.8490,
           display_name: 'Stefan', age: 36, status: 'coffee',
           interests: ['hiking', 'co-travel'],
           avatar_url: 'attached_assets/Stefan-min_1756533746271.png'
         },
         {
-          id: 'user-3',
+          id: 'user-2',
           lat: 43.2385, lng: 76.8525,
-          display_name: 'Асем', age: 29, status: 'coffee',
+          display_name: 'Asem', age: 29, status: 'coffee',
           interests: ['coffee', 'photography'],
           avatar_url: 'attached_assets/Асем-min_1756533735058.png'
         },
         {
-          id: 'user-4',
-          lat: 43.2382, lng: 76.8522,
-          display_name: 'Нурлан', age: 30, status: 'travel',
-          interests: ['travel', 'adventure'],
-          avatar_url: '👨‍🔬'
-        },
-        {
-          id: 'user-5',
+          id: 'user-3',
           lat: 43.2300, lng: 76.8600,
-          display_name: 'Алиса', age: 27, status: 'walk',
+          display_name: 'Alice', age: 27, status: 'walk',
           interests: ['walking', 'nature'],
           avatar_url: 'attached_assets/Алиса-min_1756533716406.png'
         },
         {
-          id: 'user-6',
+          id: 'user-4',
           lat: 43.2150, lng: 76.8400,
-          display_name: 'Саша', age: 40, status: 'coffee',
+          display_name: 'Sasha', age: 40, status: 'coffee',
           interests: ['business', 'events'],
           avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
         }
@@ -744,9 +730,6 @@ function showUserProfile(user) {
         <p><strong>Интересы:</strong> ${interests}</p>
       </div>
       <div class="profile-actions">
-        <button class="action-btn profile-btn" onclick="viewFullProfile('${user.id}')">
-          ${t('profile-btn')}
-        </button>
         <button class="action-btn join-btn" onclick="joinCompany('${user.id}', '${user.display_name || user.name}')">
           ${t('join-company')}
         </button>
