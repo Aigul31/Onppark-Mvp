@@ -1195,20 +1195,14 @@ async function loadChatMessages() {
 }
 
 function loadMockMessages() {
+  // Start with only the initial message from the other user
   chatMessages = [
     {
       id: 1,
-      from_user: currentUser.id,
-      to_user: currentChatUser.id,
-      message: 'Привет! Я хочу составить компанию!',
-      created_at: new Date(Date.now() - 10000).toISOString()
-    },
-    {
-      id: 2,
       from_user: currentChatUser.id,
       to_user: currentUser.id,
-      message: 'Привет! Конечно, давайте встретимся!',
-      created_at: new Date(Date.now() - 5000).toISOString()
+      message: 'Hi! Ready to join u!',
+      created_at: new Date(Date.now() - 300000).toISOString() // 5 minutes ago
     }
   ];
   renderChatMessages();
