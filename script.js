@@ -210,7 +210,6 @@ function initializeSupabase() {
   } catch (error) {
     console.log('Supabase not available, using mock data');
   }
-}
   
   // Set current user (for demo, using a mock user)
   currentUser = {
