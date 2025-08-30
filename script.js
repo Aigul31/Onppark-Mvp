@@ -538,39 +538,16 @@ function centerOnUser() {
 
 async function addActiveUsers() {
   try {
-    let activeUsers = [];
-    
-    // Try to fetch users from Supabase if it's initialized
-    if (supabase && typeof supabase.from === 'function') {
-      console.log('Attempting to fetch profiles from Supabase...');
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .limit(10);
-      
-      if (!error && profiles && profiles.length > 0) {
-        console.log('Loaded profiles from Supabase:', profiles);
-        // Use real Supabase data and add coordinates
-        activeUsers = profiles.map((profile, index) => ({
-          ...profile,
-          lat: 43.2200 + (index * 0.005), // Spread markers around Almaty
-          lng: 76.8500 + (index * 0.005),
-          interests: profile.interests || ['general'] // Ensure interests exist
-        }));
-      } else {
-        console.log('No profiles found in Supabase or error occurred:', error);
-        activeUsers = getMockUsers();
-      }
-    } else {
-      console.log('Supabase not available, using mock data');
-      activeUsers = getMockUsers();
-    }
+    // Always use mock data with your photos for now
+    const activeUsers = getMockUsers();
     
     // Store users data globally
     allUsersData = activeUsers;
     
     // Add markers to map with status filtering
     displayFilteredUsers(activeUsers);
+    
+    console.log('Active users loaded:', activeUsers);
     
   } catch (error) {
     console.error('Error loading users:', error);
@@ -626,7 +603,9 @@ function displayFilteredUsers(users) {
     : users.filter(user => user.status === currentFilter);
   
   // Add markers for filtered users
+  console.log('Adding markers for users:', filteredUsers);
   filteredUsers.forEach(user => {
+    console.log('Creating marker for user:', user.display_name, 'status:', user.status);
     const icon = getUserIcon(user.status || 'coffee');
     const marker = L.marker([user.lat, user.lng], {icon: icon})
       .addTo(markersLayer);
@@ -714,12 +693,14 @@ function addMockUsers() {
 function getUserIcon(status) {
   const icons = {
     coffee: '☕',
-    walk: '🚶',
+    walk: '🚶‍♀️',
     travel: '✈️'
   };
   
+  const iconEmoji = icons[status] || '👤'; // Fallback to user icon if status undefined
+  
   return L.divIcon({
-    html: `<div style="background: white; color: #333; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${icons[status]}</div>`,
+    html: `<div style="background: white; color: #333; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${iconEmoji}</div>`,
     iconSize: [40, 40],
     className: 'user-marker'
   });
