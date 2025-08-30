@@ -41,6 +41,7 @@ function showMap() {
 
 function showProfile() {
   showScreen('profileScreen');
+  loadProfileData(); // Load user's registration data
 }
 
 function selectPhoto() {
@@ -342,7 +343,7 @@ const translations = {
     'you-here': 'Вы здесь! 👋',
     'placement-success': 'Отлично! Теперь вас видят другие пользователи',
     'profile-btn': '👤 Профиль',
-    'join-company': '🤝 Хочу составить компанию',
+    'join-company': 'Hi! Want to join u',
     'anonymous': 'Аноним',
     'show': 'Показать',
     'forgot-password': 'Забыли пароль?',
@@ -382,7 +383,7 @@ const translations = {
     'you-here': 'You are here! 👋',
     'placement-success': 'Great! Now other users can see you',
     'profile-btn': '👤 Profile',
-    'join-company': '🤝 Join Company',
+    'join-company': 'Hi! Want to join u',
     'anonymous': 'Anonymous',
     'show': 'Show',
     'forgot-password': 'Forgot password?',
@@ -584,14 +585,14 @@ function getMockUsers() {
         },
         {
           id: 'user-3',
-          lat: 43.2210, lng: 76.8515,
+          lat: 43.2385, lng: 76.8525,
           display_name: 'Alice', age: 27, status: 'walk',
           interests: ['walking', 'nature'],
           avatar_url: 'attached_assets/Алиса-min_1756533716406.png'
         },
         {
           id: 'user-4',
-          lat: 43.2230, lng: 76.8510,
+          lat: 43.2390, lng: 76.8530,
           display_name: 'Sasha', age: 40, status: 'travel',
           interests: ['business', 'travel'],
           avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
@@ -604,13 +605,20 @@ function displayFilteredUsers(users) {
   // Clear existing markers
   markersLayer.clearLayers();
   
-  // Filter users based on current filter
-  const filteredUsers = currentFilter === 'all' 
-    ? users 
-    : users.filter(user => user.status === currentFilter);
+  // Always show all 4 fake profiles regardless of filter
+  const fakeProfiles = users.filter(user => ['user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
   
-  // Add markers for filtered users
-  filteredUsers.forEach(user => {
+  // Filter other users based on current filter
+  const otherUsers = users.filter(user => !['user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
+  const filteredOtherUsers = currentFilter === 'all' 
+    ? otherUsers 
+    : otherUsers.filter(user => user.status === currentFilter);
+  
+  // Combine fake profiles (always visible) with filtered other users
+  const allVisibleUsers = [...fakeProfiles, ...filteredOtherUsers];
+  
+  // Add markers for all visible users
+  allVisibleUsers.forEach(user => {
     const icon = getUserIcon(user.status || 'coffee');
     const marker = L.marker([user.lat, user.lng], {icon: icon})
       .addTo(markersLayer);
@@ -980,7 +988,7 @@ function createMockConnection(userId, userName) {
   }
   
   showMessage('sent');
-  console.log(`Request sent to ${userName}: Привет! Я хочу составить компанию!`);
+  console.log(`Request sent to ${userName}: Hi! Want to join u`);
 }
 
 async function sendInitialMessage(userId, userName) {
@@ -1071,22 +1079,32 @@ function initializePendingConnections() {
   pendingConnections = [
     {
       id: 'conn-1',
-      from_user: 'user-2',
+      from_user: 'user-1',
       from_user_name: 'Stefan',
       from_user_avatar: 'attached_assets/Stefan-min_1756533746271.png',
-      message: 'Хочу составить тебе компанию!',
+      message: 'Hi! Want to join u',
       timestamp: new Date(Date.now() - 300000) // 5 minutes ago
     },
     {
       id: 'conn-2', 
-      from_user: 'user-5',
-      from_user_name: 'Алиса',
-      from_user_avatar: 'attached_assets/Алиса-min_1756533716406.png',
-      message: 'Хочу составить тебе компанию!',
+      from_user: 'user-2',
+      from_user_name: 'Asem',
+      from_user_avatar: 'attached_assets/Асем-min_1756533735058.png',
+      message: 'Hi! Want to join u',
       timestamp: new Date(Date.now() - 180000) // 3 minutes ago
     }
   ];
+  
+  // Call this function automatically
+  setTimeout(() => {
+    if (pendingConnections.length > 0) {
+      console.log('Demo notifications initialized');
+    }
+  }, 1000);
 }
+
+// Initialize demo notifications on page load
+setTimeout(initializePendingConnections, 2000);
 
 function openChat() {
   if (activeConnections.length === 0) {
@@ -1287,13 +1305,33 @@ function renderNotifications() {
   const container = document.getElementById('notificationsContent');
   container.innerHTML = '';
   
+  // Add map button at the top
+  const mapButtonDiv = document.createElement('div');
+  mapButtonDiv.style.cssText = 'text-align: center; padding: 20px;';
+  mapButtonDiv.innerHTML = `
+    <button onclick="showScreen('mapScreen')" style="
+      background: #5CBAA8;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    ">
+      🗺️ Карта
+    </button>
+  `;
+  container.appendChild(mapButtonDiv);
+  
   if (pendingConnections.length === 0) {
-    container.innerHTML = `
-      <div style="text-align: center; padding: 40px; color: #666;">
-        <div style="font-size: 50px; margin-bottom: 20px;">📭</div>
-        <p>Пока нет уведомлений</p>
-      </div>
+    const emptyDiv = document.createElement('div');
+    emptyDiv.style.cssText = 'text-align: center; padding: 40px; color: #666;';
+    emptyDiv.innerHTML = `
+      <div style="font-size: 50px; margin-bottom: 20px;">📭</div>
+      <p>Пока нет уведомлений</p>
     `;
+    container.appendChild(emptyDiv);
     return;
   }
   
@@ -1313,9 +1351,6 @@ function renderNotifications() {
           </button>
           <button class="notification-btn reject-btn" onclick="rejectConnection('${connection.id}')">
             ✗
-          </button>
-          <button class="notification-btn message-btn" onclick="openChat('${connection.from_user}', '${connection.from_user_name}')" style="display: none;">
-            💬
           </button>
         </div>
       </div>
@@ -1342,24 +1377,14 @@ function acceptConnection(connectionId) {
     }
   }
   
-  // Show message button and hide accept/reject buttons
-  const notificationElement = document.querySelector(`[onclick="acceptConnection('${connectionId}')"]`).closest('.notification-item');
-  if (notificationElement) {
-    const acceptBtn = notificationElement.querySelector('.accept-btn');
-    const rejectBtn = notificationElement.querySelector('.reject-btn');
-    const messageBtn = notificationElement.querySelector('.message-btn');
-    
-    acceptBtn.style.display = 'none';
-    rejectBtn.style.display = 'none';
-    messageBtn.style.display = 'inline-block';
-    messageBtn.style.backgroundColor = '#5CBAA8';
-    messageBtn.style.color = 'white';
-  }
+  // Remove from pending connections (buttons disappear for 24 hours)
+  pendingConnections = pendingConnections.filter(c => c.id !== connectionId);
+  
+  // Re-render notifications
+  renderNotifications();
   
   // Show success message
   showConnectionAccepted(connection.from_user_name);
-  
-  // Don't remove from pending immediately - let user click message button
 }
 
 function rejectConnection(connectionId) {
@@ -1506,13 +1531,21 @@ function loadProfileData() {
     const profileTelegram = document.getElementById('profileTelegram');
     const profileAge = document.getElementById('profileAge');
     const profileInterests = document.getElementById('profileInterests');
+    const profileImage = document.getElementById('profileImage');
     
     if (profileName) profileName.textContent = profile.name || 'Ая';
     if (profileTelegram) profileTelegram.textContent = profile.telegram || 'Yaya2025';
     if (profileAge) profileAge.textContent = profile.age || '32';
     
+    // Load uploaded photo if available
+    if (profileImage && profile.avatar_url) {
+      profileImage.src = profile.avatar_url;
+    }
+    
     if (selectedInterests.length > 0) {
       if (profileInterests) profileInterests.textContent = selectedInterests.join(' ');
+    } else if (profile.interests) {
+      if (profileInterests) profileInterests.textContent = Array.isArray(profile.interests) ? profile.interests.join(' ') : profile.interests;
     }
   }
 }
