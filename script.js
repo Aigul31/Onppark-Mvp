@@ -274,6 +274,7 @@ let currentLanguage = 'ru'; // Default language
 let supabase; // Supabase client
 let currentUser = null; // Current user data
 let activeConnections = []; // Active connection requests
+let allUsersData = []; // Store all users data for access in chat
 
 // Translation dictionary
 const translations = {
@@ -534,14 +535,14 @@ async function addActiveUsers() {
           lat: 43.2200, lng: 76.8490,
           display_name: 'Stefan', age: 36, status: 'travel',
           interests: ['hiking', 'co-travel'],
-          avatar_url: '👨‍💻'
+          avatar_url: 'attached_assets/Stefan-min_1756533746271.png'
         },
         {
           id: 'user-3',
           lat: 43.2385, lng: 76.8525,
           display_name: 'Асем', age: 26, status: 'coffee',
           interests: ['coffee', 'photography'],
-          avatar_url: '👩‍🎨'
+          avatar_url: 'attached_assets/Асем-min_1756533735058.png'
         },
         {
           id: 'user-4',
@@ -555,14 +556,14 @@ async function addActiveUsers() {
           lat: 43.2300, lng: 76.8600,
           display_name: 'Алиса', age: 27, status: 'walk',
           interests: ['walking', 'nature'],
-          avatar_url: '👩‍🎓'
+          avatar_url: 'attached_assets/Алиса-min_1756533716406.png'
         },
         {
           id: 'user-6',
           lat: 43.2150, lng: 76.8400,
           display_name: 'Саша', age: 40, status: 'coffee',
           interests: ['business', 'events'],
-          avatar_url: '👨‍💼'
+          avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
         }
       ];
     } else {
@@ -573,6 +574,9 @@ async function addActiveUsers() {
         lng: 76.8500 + (index * 0.01)
       }));
     }
+    
+    // Store users data globally
+    allUsersData = activeUsers;
     
     // Add markers to map
     activeUsers.forEach(user => {
@@ -606,14 +610,14 @@ function addMockUsers() {
       lat: 43.2200, lng: 76.8490,
       display_name: 'Stefan', age: 36, status: 'travel',
       interests: ['hiking', 'co-travel'],
-      avatar_url: '👨‍💻'
+      avatar_url: 'attached_assets/Stefan-min_1756533746271.png'
     },
     {
       id: 'user-3',
       lat: 43.2385, lng: 76.8525,
       display_name: 'Асем', age: 26, status: 'coffee',
       interests: ['coffee', 'photography'],
-      avatar_url: '👩‍🎨'
+      avatar_url: 'attached_assets/Асем-min_1756533735058.png'
     },
     {
       id: 'user-4',
@@ -627,16 +631,19 @@ function addMockUsers() {
       lat: 43.2300, lng: 76.8600,
       display_name: 'Алиса', age: 27, status: 'walk',
       interests: ['walking', 'nature'],
-      avatar_url: '👩‍🎓'
+      avatar_url: 'attached_assets/Алиса-min_1756533716406.png'
     },
     {
       id: 'user-6',
       lat: 43.2150, lng: 76.8400,
       display_name: 'Саша', age: 40, status: 'coffee',
       interests: ['business', 'events'],
-      avatar_url: '👨‍💼'
+      avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
     }
   ];
+  
+  // Store users data globally  
+  allUsersData = activeUsers;
   
   activeUsers.forEach(user => {
     const icon = getUserIcon(user.status);
@@ -669,10 +676,16 @@ function showUserProfile(user) {
   
   const interests = Array.isArray(user.interests) ? user.interests.join(', ') : user.interests || 'Не указано';
   
+  // Check if user has a real photo or emoji avatar
+  const isPhoto = user.avatar_url && user.avatar_url.includes('attached_assets');
+  const avatarContent = isPhoto 
+    ? `<img src="${user.avatar_url}" alt="${user.display_name}" class="profile-photo" />` 
+    : `<span class="profile-emoji">${user.avatar_url || user.avatar || '👤'}</span>`;
+  
   profilePopup.innerHTML = `
     <div class="profile-popup-content">
       <div class="profile-header">
-        <span class="profile-avatar">${user.avatar_url || user.avatar || '👤'}</span>
+        <div class="profile-avatar">${avatarContent}</div>
         <div class="profile-info">
           <h3>${user.display_name || user.name}, ${user.age}</h3>
           <p class="profile-status">${getStatusText(user.status)}</p>
@@ -731,10 +744,17 @@ async function viewFullProfile(userId) {
     // Show full profile modal
     const fullProfilePopup = document.createElement('div');
     fullProfilePopup.className = 'user-profile-popup';
+    
+    // Check if profile has a real photo or emoji avatar
+    const isPhoto = profile.avatar_url && profile.avatar_url.includes('attached_assets');
+    const avatarContent = isPhoto 
+      ? `<img src="${profile.avatar_url}" alt="${profile.display_name}" class="profile-photo" />` 
+      : `<span class="profile-emoji">${profile.avatar_url || '👤'}</span>`;
+    
     fullProfilePopup.innerHTML = `
       <div class="profile-popup-content">
         <div class="profile-header">
-          <span class="profile-avatar">${profile.avatar_url || '👤'}</span>
+          <div class="profile-avatar">${avatarContent}</div>
           <div class="profile-info">
             <h3>${profile.display_name}, ${profile.age}</h3>
             <p class="profile-status">${getStatusText(profile.status)}</p>
@@ -929,8 +949,18 @@ function openChat() {
   };
   
   // Set chat header info
-  document.getElementById('chatAvatar').textContent = '👤';
-  document.getElementById('chatUserName').textContent = currentChatUser.name;
+  const chatAvatarEl = document.getElementById('chatAvatar');
+  const chatUserNameEl = document.getElementById('chatUserName');
+  
+  // Find the user data to get avatar
+  const userData = allUsersData.find(u => u.id === currentChatUser.id);
+  if (userData && userData.avatar_url && userData.avatar_url.includes('attached_assets')) {
+    chatAvatarEl.innerHTML = `<img src="${userData.avatar_url}" alt="${currentChatUser.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`;
+  } else {
+    chatAvatarEl.textContent = '👤';
+  }
+  
+  chatUserNameEl.textContent = currentChatUser.name;
   
   // Load existing messages
   loadChatMessages();

@@ -1176,6 +1176,30 @@ body {
   transform: none;
 }
 
+/* Profile Photo Styles */
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 50%;
+  margin-right: 15px;
+  overflow: hidden;
+}
+
+.profile-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-emoji {
+  font-size: 50px;
+}
+
 /* Language Selector - Top Right */
 .language-selector-top {
   position: absolute;
