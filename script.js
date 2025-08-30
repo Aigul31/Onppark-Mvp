@@ -1258,9 +1258,23 @@ function showConnectionAccepted(userName) {
 }
 
 function viewUserProfile(userId) {
-  const user = allUsersData.find(u => u.id === userId);
-  if (user) {
-    showUserProfile(user);
+  // Map user IDs to their specific profile screens
+  const profileScreens = {
+    'user-2': 'stefanProfileScreen',     // Stefan
+    'user-5': 'aliceProfileScreen',      // Алиса
+    'user-3': 'asemProfileScreen',       // Асем
+    'user-4': 'sashaProfileScreen'       // Саша
+  };
+  
+  const screenId = profileScreens[userId];
+  if (screenId) {
+    showScreen(screenId);
+  } else {
+    // Fallback to regular profile popup
+    const user = allUsersData.find(u => u.id === userId);
+    if (user) {
+      showUserProfile(user);
+    }
   }
 }
 
