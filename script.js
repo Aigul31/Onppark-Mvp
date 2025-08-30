@@ -194,30 +194,17 @@ function initializeSupabase() {
   try {
     // Initialize real Supabase if credentials are available
     if (window.supabase && typeof window.supabase.createClient === 'function') {
-      // Get environment variables from Replit secrets
-      const supabaseUrl = window.location.hostname.includes('replit') ? 
-        (window.SUPABASE_URL || 'your-project-url') : 'your-project-url';
-      const supabaseKey = window.location.hostname.includes('replit') ? 
-        (window.SUPABASE_ANON_KEY || 'your-anon-key') : 'your-anon-key';
+      // Use Replit secrets injected in the HTML or from environment
+      // These would be injected from the server in a real deployment
+      const supabaseUrl = window.REPLIT_ENV_SUPABASE_URL || 'your-project-url';
+      const supabaseKey = window.REPLIT_ENV_SUPABASE_ANON_KEY || 'your-anon-key';
       
-      // For Replit environment, try to get from backend
-      if (window.location.hostname.includes('replit')) {
-        // In a real Replit app, you would get these from your backend securely
-        fetch('/api/config')
-          .then(response => response.json())
-          .then(config => {
-            if (config.supabaseUrl && config.supabaseKey) {
-              supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
-              console.log('Supabase initialized with Replit secrets');
-            }
-          })
-          .catch(() => {
-            console.log('Could not get Supabase config from backend');
-          });
-      } else {
-        // Initialize Supabase client
+      // Initialize Supabase client with real credentials
+      if (supabaseUrl !== 'your-project-url' && supabaseKey !== 'your-anon-key') {
         supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        console.log('Supabase initialized successfully');
+        console.log('Supabase initialized with environment credentials');
+      } else {
+        console.log('Supabase credentials not found, using mock data');
       }
     }
   } catch (error) {
