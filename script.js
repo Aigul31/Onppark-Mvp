@@ -183,32 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setLanguage(savedLang);
   
   // Initialize Supabase
-  initializeSupabase();
-  
-  // Initialize pending connections
-  initializePendingConnections();
-});
-
-// Supabase Integration
-function initializeSupabase() {
-  try {
-    // Initialize real Supabase if credentials are available
-    if (window.supabase && typeof window.supabase.createClient === 'function') {
-      // Use environment variables (these should be set during static build or deployment)
-      const supabaseUrl = process?.env?.SUPABASE_URL || 'your-project-url';
-      const supabaseKey = process?.env?.SUPABASE_ANON_KEY || 'your-anon-key';
-      
-      // Initialize Supabase client with real credentials
-      if (supabaseUrl !== 'your-project-url' && supabaseKey !== 'your-anon-key') {
-        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        console.log('Supabase initialized with environment credentials');
-      } else {
-        console.log('Supabase credentials not found, using mock data');
-      }
-    }
-  } catch (error) {
-    console.log('Supabase not available, using mock data');
-  }
+  const supabaseReady = initializeSupabase();
   
   // Set current user (for demo, using a mock user)
   currentUser = {
@@ -221,6 +196,44 @@ function initializeSupabase() {
   };
   
   console.log('OnPark initialized with demo data');
+  
+  // Initialize pending connections
+  initializePendingConnections();
+});
+
+// Supabase Integration
+function initializeSupabase() {
+  try {
+    // Initialize real Supabase if credentials are available
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+      // For static deployment, credentials should be in a config file or build process
+      // For now, we'll try to get them from a potential config object or use placeholders
+      let supabaseUrl = 'https://your-project.supabase.co';
+      let supabaseKey = 'your-anon-key';
+      
+      // Try to get from global config if available
+      if (window.SUPABASE_CONFIG) {
+        supabaseUrl = window.SUPABASE_CONFIG.url;
+        supabaseKey = window.SUPABASE_CONFIG.key;
+      }
+      
+      // Initialize Supabase client with real credentials
+      if (supabaseUrl !== 'https://your-project.supabase.co' && supabaseKey !== 'your-anon-key') {
+        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        console.log('Supabase initialized with credentials');
+        return true;
+      } else {
+        console.log('Supabase credentials not configured, using mock data');
+        return false;
+      }
+    } else {
+      console.log('Supabase library not loaded, using mock data');
+      return false;
+    }
+  } catch (error) {
+    console.log('Supabase initialization failed, using mock data:', error);
+    return false;
+  }
 }
 
 // Language Functions
@@ -524,17 +537,68 @@ function centerOnUser() {
 
 async function addActiveUsers() {
   try {
-    // Try to fetch users from Supabase
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .limit(10);
+    let activeUsers = [];
     
-    let activeUsers;
+    // Try to fetch users from Supabase if it's initialized
+    if (supabase && typeof supabase.from === 'function') {
+      console.log('Attempting to fetch profiles from Supabase...');
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .limit(10);
+      
+      if (!error && profiles && profiles.length > 0) {
+        console.log('Loaded profiles from Supabase:', profiles);
+        // Use real Supabase data and add coordinates
+        activeUsers = profiles.map((profile, index) => ({
+          ...profile,
+          lat: 43.2200 + (index * 0.005), // Spread markers around Almaty
+          lng: 76.8500 + (index * 0.005),
+          interests: profile.interests || ['general'] // Ensure interests exist
+        }));
+      } else {
+        console.log('No profiles found in Supabase or error occurred:', error);
+        activeUsers = getMockUsers();
+      }
+    } else {
+      console.log('Supabase not available, using mock data');
+      activeUsers = getMockUsers();
+    }
     
-    if (error || !profiles || profiles.length === 0) {
-      // Fallback to mock data if Supabase is not available
-      activeUsers = [
+    // Store users data globally
+    allUsersData = activeUsers;
+    
+    // Add markers to map
+    activeUsers.forEach(user => {
+      const icon = getUserIcon(user.status || 'coffee');
+      const marker = L.marker([user.lat, user.lng], {icon: icon})
+        .addTo(markersLayer);
+        
+      marker.on('click', function() {
+        showUserProfile(user);
+      });
+    });
+    
+  } catch (error) {
+    console.error('Error loading users:', error);
+    // Fallback to mock data
+    const mockUsers = getMockUsers();
+    allUsersData = mockUsers;
+    
+    mockUsers.forEach(user => {
+      const icon = getUserIcon(user.status);
+      const marker = L.marker([user.lat, user.lng], {icon: icon})
+        .addTo(markersLayer);
+        
+      marker.on('click', function() {
+        showUserProfile(user);
+      });
+    });
+  }
+}
+
+function getMockUsers() {
+  return [
         {
           id: 'user-1',
           lat: 43.2380, lng: 76.8520,
@@ -578,34 +642,6 @@ async function addActiveUsers() {
           avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
         }
       ];
-    } else {
-      // Use real Supabase data and add coordinates
-      activeUsers = profiles.map((profile, index) => ({
-        ...profile,
-        lat: 43.2200 + (index * 0.01),
-        lng: 76.8500 + (index * 0.01)
-      }));
-    }
-    
-    // Store users data globally
-    allUsersData = activeUsers;
-    
-    // Add markers to map
-    activeUsers.forEach(user => {
-      const icon = getUserIcon(user.status);
-      const marker = L.marker([user.lat, user.lng], {icon: icon})
-        .addTo(markersLayer);
-        
-      marker.on('click', function() {
-        showUserProfile(user);
-      });
-    });
-    
-  } catch (error) {
-    console.error('Error loading users:', error);
-    // Fallback to mock data
-    addMockUsers();
-  }
 }
 
 function addMockUsers() {
