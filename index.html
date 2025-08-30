@@ -219,9 +219,9 @@
           </div>
           
           <div class="bottom-nav">
-            <button class="nav-btn" id="chatBtn">💬</button>
+            <button class="nav-btn" id="chatBtn" onclick="showMessages()">💬</button>
             <button class="nav-btn" id="notificationsBtn" onclick="showNotifications()">❗</button>
-            <button class="nav-btn active" onclick="showProfile()">👤</button>
+            <button class="nav-btn" onclick="showProfile()">👤</button>
           </div>
         </div>
       </div>
@@ -478,6 +478,35 @@
         
         <div class="profile-view-back">
           <button class="back-btn-circle" onclick="showNotifications()">←</button>
+        </div>
+      </div>
+
+      <!-- Messages Screen -->
+      <div id="messagesScreen" class="screen">
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <span class="signal">●●●●</span>
+            <span class="wifi">📶</span>
+            <span class="battery">🔋</span>
+          </div>
+        </div>
+        
+        <div class="messages-header">
+          <button class="back-btn" onclick="showMap()">←</button>
+          <span>Сообщения</span>
+        </div>
+        
+        <div class="messages-container">
+          <div id="messagesList" class="messages-list">
+            <!-- Confirmed profiles will be loaded here -->
+          </div>
+        </div>
+        
+        <div class="bottom-nav">
+          <button class="nav-btn" id="chatBtn" onclick="showMessages()">💬</button>
+          <button class="nav-btn" id="notificationsBtn" onclick="showNotifications()">❗</button>
+          <button class="nav-btn" onclick="showProfile()">👤</button>
         </div>
       </div>
 

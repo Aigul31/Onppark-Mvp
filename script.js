@@ -175,6 +175,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  // Chat button functionality
+  const chatBtn = document.getElementById('chatBtn');
+  if (chatBtn) {
+    chatBtn.addEventListener('click', showMessages);
+  }
+
   // Load saved profile data
   loadProfileData();
   
@@ -299,6 +305,7 @@ let myMarker = null; // User's own marker on map
 let currentLanguage = 'ru'; // Default language
 let supabase; // Supabase client
 let currentUser = null; // Current user data
+let confirmedProfiles = []; // List of confirmed profiles for messaging
 let activeConnections = []; // Active connection requests
 let allUsersData = []; // Store all users data for access in chat
 
@@ -547,7 +554,7 @@ async function addActiveUsers() {
     // Add markers to map with status filtering
     displayFilteredUsers(activeUsers);
     
-    console.log('Active users loaded:', activeUsers);
+    console.log('Active users loaded with coordinates updated');
     
   } catch (error) {
     console.error('Error loading users:', error);
@@ -563,28 +570,28 @@ function getMockUsers() {
   return [
         {
           id: 'user-1',
-          lat: 43.2200, lng: 76.8490,
+          lat: 43.2215, lng: 76.8505,
           display_name: 'Stefan', age: 36, status: 'coffee',
           interests: ['hiking', 'co-travel'],
           avatar_url: 'attached_assets/Stefan-min_1756533746271.png'
         },
         {
           id: 'user-2',
-          lat: 43.2385, lng: 76.8525,
+          lat: 43.2225, lng: 76.8520,
           display_name: 'Asem', age: 29, status: 'coffee',
           interests: ['coffee', 'photography'],
           avatar_url: 'attached_assets/Асем-min_1756533735058.png'
         },
         {
           id: 'user-3',
-          lat: 43.2300, lng: 76.8600,
+          lat: 43.2210, lng: 76.8515,
           display_name: 'Alice', age: 27, status: 'walk',
           interests: ['walking', 'nature'],
           avatar_url: 'attached_assets/Алиса-min_1756533716406.png'
         },
         {
           id: 'user-4',
-          lat: 43.2150, lng: 76.8400,
+          lat: 43.2230, lng: 76.8510,
           display_name: 'Sasha', age: 40, status: 'travel',
           interests: ['business', 'travel'],
           avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
@@ -603,9 +610,7 @@ function displayFilteredUsers(users) {
     : users.filter(user => user.status === currentFilter);
   
   // Add markers for filtered users
-  console.log('Adding markers for users:', filteredUsers);
   filteredUsers.forEach(user => {
-    console.log('Creating marker for user:', user.display_name, 'status:', user.status);
     const icon = getUserIcon(user.status || 'coffee');
     const marker = L.marker([user.lat, user.lng], {icon: icon})
       .addTo(markersLayer);
@@ -624,10 +629,92 @@ function updateMapFilter(filter) {
   document.querySelectorAll('.filter-icon').forEach(btn => {
     btn.classList.remove('active');
   });
-  document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+  const filterBtn = document.querySelector(`[data-filter="${filter}"]`);
+  if (filterBtn) {
+    filterBtn.classList.add('active');
+  }
   
   // Re-display users with new filter
   displayFilteredUsers(allUsersData);
+}
+
+function showMessages() {
+  // Hide all screens
+  document.querySelectorAll('.screen').forEach(screen => {
+    screen.classList.remove('active');
+  });
+  
+  // Show messages screen
+  document.getElementById('messagesScreen').classList.add('active');
+  
+  // Update nav buttons
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.getElementById('chatBtn').classList.add('active');
+  
+  // Load confirmed profiles
+  loadConfirmedProfiles();
+}
+
+function loadConfirmedProfiles() {
+  const messagesList = document.getElementById('messagesList');
+  
+  if (confirmedProfiles.length === 0) {
+    messagesList.innerHTML = `
+      <div class="empty-messages">
+        <div class="empty-messages-icon">💬</div>
+        <div class="empty-messages-text">
+          Нет подтвержденных профилей.<br>
+          Отправьте запрос на компанию с карты,<br>
+          и они появятся здесь.
+        </div>
+      </div>
+    `;
+    return;
+  }
+  
+  messagesList.innerHTML = '';
+  
+  confirmedProfiles.forEach(profile => {
+    const messageItem = document.createElement('div');
+    messageItem.className = 'message-item';
+    messageItem.onclick = () => openChat(profile);
+    
+    const avatarContent = profile.avatar_url && profile.avatar_url.includes('attached_assets')
+      ? `<img src="${profile.avatar_url}" alt="${profile.display_name}" class="message-avatar" />`
+      : `<div class="message-avatar" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0; font-size: 20px;">${profile.avatar_url || '👤'}</div>`;
+    
+    messageItem.innerHTML = `
+      ${avatarContent}
+      <div class="message-info">
+        <div class="message-name">${profile.display_name}, ${profile.age}</div>
+        <div class="message-preview">Запрос на компанию отправлен</div>
+      </div>
+      <div class="message-time">${formatTime(profile.confirmDate)}</div>
+    `;
+    
+    messagesList.appendChild(messageItem);
+  });
+}
+
+function formatTime(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+  
+  if (diffInHours < 1) {
+    return 'сейчас';
+  } else if (diffInHours < 24) {
+    return `${diffInHours}ч назад`;
+  } else {
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  }
+}
+
+function openChat(profile) {
+  alert(`Открыть чат с ${profile.display_name}`);
+  // TODO: Implement individual chat functionality
 }
 
 function addMockUsers() {
@@ -872,18 +959,18 @@ async function joinCompany(userId, userName) {
 }
 
 function createMockConnection(userId, userName) {
-  // Fallback for when Supabase is not available
-  const connectionId = 'mock-conn-' + Date.now();
+  // Add user to confirmed profiles list
+  const user = allUsersData.find(u => u.id === userId);
+  if (user && !confirmedProfiles.find(profile => profile.id === userId)) {
+    confirmedProfiles.push({
+      ...user,
+      confirmDate: new Date().toISOString()
+    });
+    console.log('Profile added to confirmed list:', user.display_name);
+  }
   
-  activeConnections.push({
-    id: connectionId,
-    to_user: userId,
-    to_user_name: userName,
-    status: 'pending'
-  });
-  
-  sendMockInitialMessage(userId, userName);
-  showConnectionSuccess(userName);
+  showMessage('sent');
+  console.log(`Request sent to ${userName}: Привет! Я хочу составить компанию!`);
 }
 
 async function sendInitialMessage(userId, userName) {
