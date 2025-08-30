@@ -343,7 +343,7 @@ const translations = {
     'you-here': 'Вы здесь! 👋',
     'placement-success': 'Отлично! Теперь вас видят другие пользователи',
     'profile-btn': '👤 Профиль',
-    'join-company': 'Hi! Want to join u',
+    'join-company': 'Hi! Ready to join u!',
     'anonymous': 'Аноним',
     'show': 'Показать',
     'forgot-password': 'Забыли пароль?',
@@ -383,7 +383,7 @@ const translations = {
     'you-here': 'You are here! 👋',
     'placement-success': 'Great! Now other users can see you',
     'profile-btn': '👤 Profile',
-    'join-company': 'Hi! Want to join u',
+    'join-company': 'Hi! Ready to join u!',
     'anonymous': 'Anonymous',
     'show': 'Show',
     'forgot-password': 'Forgot password?',
@@ -697,7 +697,7 @@ function loadConfirmedProfiles() {
       ${avatarContent}
       <div class="message-info">
         <div class="message-name">${profile.display_name}, ${profile.age}</div>
-        <div class="message-preview">Привет! Хочу составить компанию!</div>
+        <div class="message-preview">Hi! Ready to join u!</div>
       </div>
       <div class="message-time">${formatTime(profile.confirmDate)}</div>
     `;
@@ -987,7 +987,7 @@ function createMockConnection(userId, userName) {
   }
   
   showMessage('sent');
-  console.log(`Request sent to ${userName}: Hi! Want to join u`);
+  console.log(`Request sent to ${userName}: Hi! Ready to join u!`);
 }
 
 async function sendInitialMessage(userId, userName) {
@@ -1081,7 +1081,7 @@ function initializePendingConnections() {
       from_user: 'user-1',
       from_user_name: 'Stefan',
       from_user_avatar: 'attached_assets/Stefan-min_1756533746271.png',
-      message: 'Hi! Want to join u',
+      message: 'Hi! Ready to join u!',
       timestamp: new Date(Date.now() - 300000) // 5 minutes ago
     },
     {
@@ -1089,7 +1089,7 @@ function initializePendingConnections() {
       from_user: 'user-2',
       from_user_name: 'Asem',
       from_user_avatar: 'attached_assets/Асем-min_1756533735058.png',
-      message: 'Hi! Want to join u',
+      message: 'Hi! Ready to join u!',
       timestamp: new Date(Date.now() - 180000) // 3 minutes ago
     }
   ];
