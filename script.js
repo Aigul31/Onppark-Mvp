@@ -14,6 +14,9 @@ function showScreen(screenId) {
     screen.classList.remove('active');
   });
   document.getElementById(screenId).classList.add('active');
+  
+  // Apply translations every time we switch screens
+  updateTranslations();
 }
 
 function showRegistration() {
@@ -258,6 +261,12 @@ function setLanguage(lang) {
   
   // Update all translatable elements
   updateTranslations();
+  
+  // Update dynamic content if currently viewing
+  const messagesScreen = document.getElementById('messagesScreen');
+  if (messagesScreen && messagesScreen.style.display !== 'none') {
+    loadConfirmedProfiles();
+  }
 }
 
 function updateTranslations() {
@@ -266,6 +275,15 @@ function updateTranslations() {
     const key = element.getAttribute('data-i18n');
     if (translations[currentLanguage] && translations[currentLanguage][key]) {
       element.textContent = translations[currentLanguage][key];
+    }
+  });
+  
+  // Update placeholders
+  const placeholderElements = document.querySelectorAll('[data-i18n-placeholder]');
+  placeholderElements.forEach(element => {
+    const key = element.getAttribute('data-i18n-placeholder');
+    if (translations[currentLanguage] && translations[currentLanguage][key]) {
+      element.placeholder = translations[currentLanguage][key];
     }
   });
 }
@@ -350,7 +368,13 @@ const translations = {
     'create-profile': 'Создать профиль',
     'select-from-gallery': 'Выбрать из галереи',
     'interests-title': 'Добавить интересы',
-    'add-interests': 'Добавить интересы'
+    'add-interests': 'Добавить интересы',
+    'messages': 'Сообщения',
+    'notifications': 'Уведомления',
+    'no-confirmed-profiles': 'Нет подтвержденных профилей.',
+    'send-request-from-map': 'Отправьте запрос на компанию с карты,',
+    'they-will-appear-here': 'и они появятся здесь.',
+    'message-placeholder': 'Написать сообщение...'
   },
   en: {
     'create-connections': 'Create Connections',
@@ -390,7 +414,13 @@ const translations = {
     'create-profile': 'Create Profile',
     'select-from-gallery': 'Select from Gallery',
     'interests-title': 'Add Interests',
-    'add-interests': 'Add Interests'
+    'add-interests': 'Add Interests',
+    'messages': 'Messages',
+    'notifications': 'Notifications',
+    'no-confirmed-profiles': 'No confirmed profiles.',
+    'send-request-from-map': 'Send a company request from the map,',
+    'they-will-appear-here': 'and they will appear here.',
+    'message-placeholder': 'Type a message...'
   }
 }
 
@@ -672,9 +702,9 @@ function loadConfirmedProfiles() {
       <div class="empty-messages">
         <div class="empty-messages-icon">💬</div>
         <div class="empty-messages-text">
-          Нет подтвержденных профилей.<br>
-          Отправьте запрос на компанию с карты,<br>
-          и они появятся здесь.
+          ${t('no-confirmed-profiles')}<br>
+          ${t('send-request-from-map')}<br>
+          ${t('they-will-appear-here')}
         </div>
       </div>
     `;
