@@ -1291,6 +1291,11 @@ body {
   color: white;
 }
 
+.message-btn {
+  background: #5CBAA8;
+  color: white;
+}
+
 .notification-btn:hover {
   transform: scale(1.1);
 }

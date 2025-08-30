@@ -681,6 +681,7 @@ function loadConfirmedProfiles() {
     messageItem.className = 'message-item';
     messageItem.onclick = () => openChat(profile);
     
+    // Исправляем отображение аватарки - берем правильную из профиля
     const avatarContent = profile.avatar_url && profile.avatar_url.includes('attached_assets')
       ? `<img src="${profile.avatar_url}" alt="${profile.display_name}" class="message-avatar" />`
       : `<div class="message-avatar" style="display: flex; align-items: center; justify-content: center; background: #f0f0f0; font-size: 20px;">${profile.avatar_url || '👤'}</div>`;
@@ -689,7 +690,7 @@ function loadConfirmedProfiles() {
       ${avatarContent}
       <div class="message-info">
         <div class="message-name">${profile.display_name}, ${profile.age}</div>
-        <div class="message-preview">Запрос на компанию отправлен</div>
+        <div class="message-preview">Привет! Хочу составить компанию!</div>
       </div>
       <div class="message-time">${formatTime(profile.confirmDate)}</div>
     `;
@@ -712,9 +713,18 @@ function formatTime(dateString) {
   }
 }
 
-function openChat(profile) {
-  alert(`Открыть чат с ${profile.display_name}`);
-  // TODO: Implement individual chat functionality
+function openChat(userId, userName) {
+  if (typeof userId === 'object') {
+    // Called from messages screen with profile object
+    const profile = userId;
+    showMessages();
+    return;
+  }
+  
+  // Called from notifications - remove from pending and show messages
+  pendingConnections = pendingConnections.filter(c => c.from_user !== userId);
+  renderNotifications();
+  showMessages();
 }
 
 function addMockUsers() {
@@ -1304,6 +1314,9 @@ function renderNotifications() {
           <button class="notification-btn reject-btn" onclick="rejectConnection('${connection.id}')">
             ✗
           </button>
+          <button class="notification-btn message-btn" onclick="openChat('${connection.from_user}', '${connection.from_user_name}')" style="display: none;">
+            💬
+          </button>
         </div>
       </div>
     `;
@@ -1316,25 +1329,37 @@ function acceptConnection(connectionId) {
   const connection = pendingConnections.find(c => c.id === connectionId);
   if (!connection) return;
   
-  // Add to active connections
-  activeConnections.push({
-    id: connectionId,
-    to_user: connection.from_user,
-    to_user_name: connection.from_user_name,
-    status: 'accepted'
-  });
+  // Find user data
+  const user = allUsersData.find(u => u.id === connection.from_user);
+  if (user) {
+    // Add to confirmed profiles for messages
+    if (!confirmedProfiles.find(profile => profile.id === user.id)) {
+      confirmedProfiles.push({
+        ...user,
+        confirmDate: new Date().toISOString(),
+        chatEnabled: true
+      });
+    }
+  }
   
-  // Remove from pending
-  pendingConnections = pendingConnections.filter(c => c.id !== connectionId);
+  // Show message button and hide accept/reject buttons
+  const notificationElement = document.querySelector(`[onclick="acceptConnection('${connectionId}')"]`).closest('.notification-item');
+  if (notificationElement) {
+    const acceptBtn = notificationElement.querySelector('.accept-btn');
+    const rejectBtn = notificationElement.querySelector('.reject-btn');
+    const messageBtn = notificationElement.querySelector('.message-btn');
+    
+    acceptBtn.style.display = 'none';
+    rejectBtn.style.display = 'none';
+    messageBtn.style.display = 'inline-block';
+    messageBtn.style.backgroundColor = '#5CBAA8';
+    messageBtn.style.color = 'white';
+  }
   
   // Show success message
   showConnectionAccepted(connection.from_user_name);
   
-  // Re-render notifications
-  renderNotifications();
-  
-  // Enable chat button
-  enableChatIcon();
+  // Don't remove from pending immediately - let user click message button
 }
 
 function rejectConnection(connectionId) {
