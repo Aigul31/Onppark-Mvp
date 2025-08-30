@@ -194,10 +194,9 @@ function initializeSupabase() {
   try {
     // Initialize real Supabase if credentials are available
     if (window.supabase && typeof window.supabase.createClient === 'function') {
-      // Use Replit secrets injected in the HTML or from environment
-      // These would be injected from the server in a real deployment
-      const supabaseUrl = window.REPLIT_ENV_SUPABASE_URL || 'your-project-url';
-      const supabaseKey = window.REPLIT_ENV_SUPABASE_ANON_KEY || 'your-anon-key';
+      // Use environment variables (these should be set during static build or deployment)
+      const supabaseUrl = process?.env?.SUPABASE_URL || 'your-project-url';
+      const supabaseKey = process?.env?.SUPABASE_ANON_KEY || 'your-anon-key';
       
       // Initialize Supabase client with real credentials
       if (supabaseUrl !== 'your-project-url' && supabaseKey !== 'your-anon-key') {
