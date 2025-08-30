@@ -41,7 +41,7 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "static-web-server -w ./.config/static-web-server.toml"
-waitForPort = 80
+waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
