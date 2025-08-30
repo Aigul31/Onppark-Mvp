@@ -141,18 +141,26 @@ document.addEventListener('DOMContentLoaded', function() {
   const photoPreview = document.getElementById('photoPreview');
   
   if (photoInput) {
-    photoInput.addEventListener('change', function(e) {
+    photoInput.addEventListener('change', async function(e) {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
           photoPreview.innerHTML = `<img src="${e.target.result}" alt="Profile photo">`;
-          
-          setTimeout(() => {
-            showPhotoSuccess();
-          }, 1000);
         };
         reader.readAsDataURL(file);
+        
+        // Upload to Supabase Storage
+        const uploadedUrl = await uploadPhotoToSupabase(file);
+        if (uploadedUrl) {
+          console.log('Photo uploaded to Supabase:', uploadedUrl);
+          // Store URL for later use
+          localStorage.setItem('userAvatarUrl', uploadedUrl);
+        }
+        
+        setTimeout(() => {
+          showPhotoSuccess();
+        }, 1000);
       }
     });
   }
@@ -183,23 +191,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Supabase Integration
 function initializeSupabase() {
-  // For browser environment, we'll create a mock Supabase client
-  // In production, you would get these from your server or inject them securely
-  
   try {
-    // Try to initialize real Supabase if credentials are available
-    // Note: In a real app, you'd inject these securely from your server
+    // Initialize real Supabase if credentials are available
     if (window.supabase && typeof window.supabase.createClient === 'function') {
-      // Mock credentials for demo - replace with real ones
-      const mockUrl = 'https://your-project.supabase.co';
-      const mockKey = 'your-anon-key';
+      // Get environment variables from Replit secrets
+      const supabaseUrl = window.location.hostname.includes('replit') ? 
+        (window.SUPABASE_URL || 'your-project-url') : 'your-project-url';
+      const supabaseKey = window.location.hostname.includes('replit') ? 
+        (window.SUPABASE_ANON_KEY || 'your-anon-key') : 'your-anon-key';
       
-      // Initialize Supabase client (will fail with mock credentials)
-      supabase = window.supabase.createClient(mockUrl, mockKey);
+      // For Replit environment, try to get from backend
+      if (window.location.hostname.includes('replit')) {
+        // In a real Replit app, you would get these from your backend securely
+        fetch('/api/config')
+          .then(response => response.json())
+          .then(config => {
+            if (config.supabaseUrl && config.supabaseKey) {
+              supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+              console.log('Supabase initialized with Replit secrets');
+            }
+          })
+          .catch(() => {
+            console.log('Could not get Supabase config from backend');
+          });
+      } else {
+        // Initialize Supabase client
+        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        console.log('Supabase initialized successfully');
+      }
     }
   } catch (error) {
     console.log('Supabase not available, using mock data');
   }
+}
   
   // Set current user (for demo, using a mock user)
   currentUser = {
@@ -1314,11 +1338,44 @@ function showPhotoSuccess() {
   const photoActions = document.querySelector('.photo-actions');
   photoActions.innerHTML = `
     <div style="text-align: center; color: #007AFF; font-weight: 600; margin-bottom: 16px;">
-      Фото успешно загружено
+      Фото успешно загружено в Supabase
     </div>
-    <button class="photo-btn" onclick="showInterests()">Изменить фото</button>
+    <button class="photo-btn" onclick="selectPhoto()">Изменить фото</button>
     <button class="primary-btn" onclick="showInterests()">Дальше</button>
   `;
+}
+
+// Upload photo to Supabase Storage
+async function uploadPhotoToSupabase(file) {
+  if (!supabase) {
+    console.log('Supabase not available, skipping upload');
+    return null;
+  }
+  
+  try {
+    const fileName = `avatar_${Date.now()}_${file.name}`;
+    
+    const { data, error } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file);
+    
+    if (error) {
+      console.error('Error uploading file:', error);
+      return null;
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+    
+    console.log('Photo uploaded successfully:', urlData.publicUrl);
+    return urlData.publicUrl;
+    
+  } catch (error) {
+    console.error('Error uploading to Supabase:', error);
+    return null;
+  }
 }
 
 function loadProfileData() {

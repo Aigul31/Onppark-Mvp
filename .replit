@@ -56,3 +56,4 @@ externalPort = 80
 
 [agent]
 expertMode = true
+integrations = ["javascript_supabase==1.0.0"]
