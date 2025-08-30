@@ -215,7 +215,7 @@
           
           <div class="bottom-nav">
             <button class="nav-btn" id="chatBtn">💬</button>
-            <button class="nav-btn">❗</button>
+            <button class="nav-btn" id="notificationsBtn" onclick="showNotifications()">❗</button>
             <button class="nav-btn active" onclick="showProfile()">👤</button>
           </div>
         </div>
@@ -268,6 +268,30 @@
         </div>
       </div>
 
+      <!-- Notifications Screen -->
+      <div id="notificationsScreen" class="screen">
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <span class="signal">●●●●</span>
+          </div>
+        </div>
+        
+        <div class="notifications-header">
+          <button class="back-btn" onclick="showMap()">←</button>
+          <h2>Уведомления</h2>
+        </div>
+        
+        <div class="notifications-content" id="notificationsContent">
+          <!-- Notifications will be dynamically added here -->
+        </div>
+        
+        <div class="bottom-nav">
+          <button class="nav-btn" onclick="showMap()">🗺️</button>
+          <button class="nav-btn" id="messagesBtn">💬</button>
+        </div>
+      </div>
+
       <!-- Chat Screen -->
       <div id="chatScreen" class="screen">
         <div class="status-bar">
@@ -278,7 +302,7 @@
         </div>
         
         <div class="chat-header">
-          <button class="back-btn" onclick="showMap()">←</button>
+          <button class="back-btn" onclick="showNotifications()">←</button>
           <div class="chat-user-info">
             <span class="chat-avatar" id="chatAvatar">👤</span>
             <span class="chat-name" id="chatUserName">Пользователь</span>

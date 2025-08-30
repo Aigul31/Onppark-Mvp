@@ -176,6 +176,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize Supabase
   initializeSupabase();
+  
+  // Initialize pending connections
+  initializePendingConnections();
 });
 
 // Supabase Integration
@@ -533,14 +536,14 @@ async function addActiveUsers() {
         {
           id: 'user-2',
           lat: 43.2200, lng: 76.8490,
-          display_name: 'Stefan', age: 36, status: 'travel',
+          display_name: 'Stefan', age: 36, status: 'coffee',
           interests: ['hiking', 'co-travel'],
           avatar_url: 'attached_assets/Stefan-min_1756533746271.png'
         },
         {
           id: 'user-3',
           lat: 43.2385, lng: 76.8525,
-          display_name: 'Асем', age: 26, status: 'coffee',
+          display_name: 'Асем', age: 29, status: 'coffee',
           interests: ['coffee', 'photography'],
           avatar_url: 'attached_assets/Асем-min_1756533735058.png'
         },
@@ -608,14 +611,14 @@ function addMockUsers() {
     {
       id: 'user-2',
       lat: 43.2200, lng: 76.8490,
-      display_name: 'Stefan', age: 36, status: 'travel',
+      display_name: 'Stefan', age: 36, status: 'coffee',
       interests: ['hiking', 'co-travel'],
       avatar_url: 'attached_assets/Stefan-min_1756533746271.png'
     },
     {
       id: 'user-3',
       lat: 43.2385, lng: 76.8525,
-      display_name: 'Асем', age: 26, status: 'coffee',
+      display_name: 'Асем', age: 29, status: 'coffee',
       interests: ['coffee', 'photography'],
       avatar_url: 'attached_assets/Асем-min_1756533735058.png'
     },
@@ -659,7 +662,7 @@ function addMockUsers() {
 function getUserIcon(status) {
   const icons = {
     coffee: '☕',
-    walk: '✈️',
+    walk: '🚶',
     travel: '✈️'
   };
   
@@ -934,6 +937,29 @@ function enableChatIcon() {
 // Chat System
 let currentChatUser = null;
 let chatMessages = [];
+let pendingConnections = []; // Store pending connection requests
+
+// Mock pending connections for demo
+function initializePendingConnections() {
+  pendingConnections = [
+    {
+      id: 'conn-1',
+      from_user: 'user-2',
+      from_user_name: 'Stefan',
+      from_user_avatar: 'attached_assets/Stefan-min_1756533746271.png',
+      message: 'Хочу составить тебе компанию!',
+      timestamp: new Date(Date.now() - 300000) // 5 minutes ago
+    },
+    {
+      id: 'conn-2', 
+      from_user: 'user-5',
+      from_user_name: 'Алиса',
+      from_user_avatar: 'attached_assets/Алиса-min_1756533716406.png',
+      message: 'Хочу составить тебе компанию!',
+      timestamp: new Date(Date.now() - 180000) // 3 minutes ago
+    }
+  ];
+}
 
 function openChat() {
   if (activeConnections.length === 0) {
@@ -1124,6 +1150,129 @@ function simulateResponse() {
   renderChatMessages();
 }
 
+// Notifications System
+function showNotifications() {
+  showScreen('notificationsScreen');
+  renderNotifications();
+}
+
+function renderNotifications() {
+  const container = document.getElementById('notificationsContent');
+  container.innerHTML = '';
+  
+  if (pendingConnections.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #666;">
+        <div style="font-size: 50px; margin-bottom: 20px;">📭</div>
+        <p>Пока нет уведомлений</p>
+      </div>
+    `;
+    return;
+  }
+  
+  pendingConnections.forEach(connection => {
+    const notificationDiv = document.createElement('div');
+    notificationDiv.className = 'notification-item';
+    notificationDiv.innerHTML = `
+      <div class="notification-avatar">
+        <img src="${connection.from_user_avatar}" alt="${connection.from_user_name}" />
+      </div>
+      <div class="notification-info">
+        <button class="profile-btn-small" onclick="viewUserProfile('${connection.from_user}')">profile</button>
+        <div class="notification-message">${connection.message}</div>
+        <div class="notification-actions">
+          <button class="notification-btn accept-btn" onclick="acceptConnection('${connection.id}')">
+            ✓
+          </button>
+          <button class="notification-btn reject-btn" onclick="rejectConnection('${connection.id}')">
+            ✗
+          </button>
+        </div>
+      </div>
+    `;
+    
+    container.appendChild(notificationDiv);
+  });
+}
+
+function acceptConnection(connectionId) {
+  const connection = pendingConnections.find(c => c.id === connectionId);
+  if (!connection) return;
+  
+  // Add to active connections
+  activeConnections.push({
+    id: connectionId,
+    to_user: connection.from_user,
+    to_user_name: connection.from_user_name,
+    status: 'accepted'
+  });
+  
+  // Remove from pending
+  pendingConnections = pendingConnections.filter(c => c.id !== connectionId);
+  
+  // Show success message
+  showConnectionAccepted(connection.from_user_name);
+  
+  // Re-render notifications
+  renderNotifications();
+  
+  // Enable chat button
+  enableChatIcon();
+}
+
+function rejectConnection(connectionId) {
+  // Remove from pending
+  pendingConnections = pendingConnections.filter(c => c.id !== connectionId);
+  
+  // Re-render notifications
+  renderNotifications();
+}
+
+function showConnectionAccepted(userName) {
+  const message = document.createElement('div');
+  message.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #4CAF50;
+    color: white;
+    padding: 20px 30px;
+    border-radius: 16px;
+    font-size: 18px;
+    z-index: 10000;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    text-align: center;
+  `;
+  
+  message.innerHTML = `
+    <div style="font-size: 40px; margin-bottom: 10px;">🤝</div>
+    <div>Соединение с ${userName} принято!</div>
+  `;
+  
+  document.body.appendChild(message);
+  
+  setTimeout(() => {
+    document.body.removeChild(message);
+  }, 3000);
+}
+
+function viewUserProfile(userId) {
+  const user = allUsersData.find(u => u.id === userId);
+  if (user) {
+    showUserProfile(user);
+  }
+}
+
+function openChatFromNotifications() {
+  if (activeConnections.length === 0) {
+    alert('Нет активных соединений для чата');
+    return;
+  }
+  
+  openChat();
+}
+
 // Allow sending message with Enter key
 document.addEventListener('DOMContentLoaded', function() {
   const messageInput = document.getElementById('messageInput');
@@ -1133,6 +1282,12 @@ document.addEventListener('DOMContentLoaded', function() {
         sendMessage();
       }
     });
+  }
+  
+  // Set up messages button in notifications
+  const messagesBtn = document.getElementById('messagesBtn');
+  if (messagesBtn) {
+    messagesBtn.onclick = openChatFromNotifications;
   }
 });
 
