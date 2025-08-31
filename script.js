@@ -784,26 +784,51 @@ function centerOnUser() {
 }
 
 async function addActiveUsers() {
+  // Всегда используем фейковых пользователей для демо
+  const mockUsers = getMockUsers();
+  console.log('Loading mock users:', mockUsers.length);
+  
+  // Добавляем реальных пользователей если есть
   try {
-    // Always use mock data with your photos for now
-    const activeUsers = getMockUsers();
-    
-    // Store users data globally
-    allUsersData = activeUsers;
-    
-    // Add markers to map with status filtering
-    displayFilteredUsers(activeUsers);
-    
-    console.log('Active users loaded with coordinates updated');
-    
+    const response = await fetch('/api/profiles');
+    if (response.ok) {
+      const realProfiles = await response.json();
+      console.log('Real profiles from database:', realProfiles.length);
+      
+      // Объединяем фейковых и реальных пользователей
+      const allUsers = [...mockUsers];
+      
+      // Добавляем реальных пользователей если у них есть координаты
+      realProfiles.forEach(profile => {
+        if (profile.latitude && profile.longitude) {
+          allUsers.push({
+            id: `real-${profile.id}`,
+            lat: profile.latitude,
+            lng: profile.longitude,
+            display_name: profile.name,
+            age: profile.age,
+            status: profile.status || 'coffee',
+            interests: profile.interests ? profile.interests.split(',') : [],
+            avatar_url: profile.avatar_url,
+            telegram: profile.telegram
+          });
+        }
+      });
+      
+      allUsersData = allUsers;
+      console.log('Total users (fake + real):', allUsers.length);
+    } else {
+      allUsersData = mockUsers;
+      console.log('Using only mock users:', mockUsers.length);
+    }
   } catch (error) {
-    console.error('Error loading users:', error);
-    // Fallback to mock data
-    const mockUsers = getMockUsers();
+    console.error('Error loading real profiles:', error);
     allUsersData = mockUsers;
-    
-    displayFilteredUsers(mockUsers);
+    console.log('Fallback to mock users only:', mockUsers.length);
   }
+  
+  // Отображаем всех пользователей
+  displayFilteredUsers(allUsersData);
 }
 
 function getMockUsers() {
@@ -851,15 +876,11 @@ function getMockUsers() {
 
 // Display users based on current filter
 function displayFilteredUsers(users) {
-  console.log('displayFilteredUsers called with:', users.length, 'users');
-  console.log('Users:', users.map(u => ({ id: u.id, name: u.display_name, status: u.status })));
-  
   // Clear existing markers
   markersLayer.clearLayers();
   
   // Always show OnPark admin and all fake profiles regardless of filter
   const fakeProfiles = users.filter(user => ['onpark-admin', 'user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
-  console.log('Fake profiles found:', fakeProfiles.length, fakeProfiles.map(u => u.display_name));
   
   // Filter other users based on current filter
   const otherUsers = users.filter(user => !['onpark-admin', 'user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
@@ -869,11 +890,9 @@ function displayFilteredUsers(users) {
   
   // Combine fake profiles (always visible) with filtered other users
   const allVisibleUsers = [...fakeProfiles, ...filteredOtherUsers];
-  console.log('Total visible users:', allVisibleUsers.length);
   
   // Add markers for all visible users
   allVisibleUsers.forEach(user => {
-    console.log('Adding marker for:', user.display_name, 'at coordinates:', user.lat, user.lng);
     const icon = getUserIcon(user.status || 'coffee', user);
     const marker = L.marker([user.lat, user.lng], {icon: icon})
       .addTo(markersLayer);
@@ -1050,14 +1069,11 @@ function addMockUsers() {
 }
 
 function getUserIcon(status, user = null) {
-  console.log('Creating icon for:', { status, user: user ? user.display_name : 'no user', avatar: user ? user.avatar_url : 'no avatar' });
-  
   // Если у пользователя есть фото, показываем его
   if (user && user.avatar_url && user.avatar_url.includes('attached_assets')) {
-    console.log('Using photo icon for:', user.display_name);
     return L.divIcon({
       html: `<div style="background: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer; overflow: hidden;">
-               <img src="${user.avatar_url}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 50%;" alt="${user.display_name}" onerror="console.error('Failed to load image:', this.src)" />
+               <img src="${user.avatar_url}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 50%;" alt="${user.display_name}" />
              </div>`,
       iconSize: [50, 50],
       className: 'user-marker'
@@ -1066,7 +1082,6 @@ function getUserIcon(status, user = null) {
   
   // Для техлица OnPark или пользователей с эмодзи аватарами
   if (user && user.avatar_url && !user.avatar_url.includes('attached_assets')) {
-    console.log('Using emoji icon for:', user.display_name);
     return L.divIcon({
       html: `<div style="background: white; color: #333; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${user.avatar_url}</div>`,
       iconSize: [45, 45],
@@ -1082,7 +1097,6 @@ function getUserIcon(status, user = null) {
   };
   
   const iconEmoji = icons[status] || '👤';
-  console.log('Using status icon:', iconEmoji, 'for status:', status);
   
   return L.divIcon({
     html: `<div style="background: white; color: #333; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${iconEmoji}</div>`,
