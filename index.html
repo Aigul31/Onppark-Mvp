@@ -173,8 +173,15 @@
 
       <!-- Map Screen -->
       <div id="mapScreen" class="screen">
-        <div class="map-container-fullscreen">
-          <div id="map" class="map-area-fullscreen"></div>
+        <div class="status-bar">
+        </div>
+        
+        <div class="map-header">
+          <button class="map-filter-btn" data-i18n="map-select">Выбрать</button>
+        </div>
+        
+        <div class="map-container">
+          <div id="map" class="map-area"></div>
           
           <div class="map-filters">
             <div class="filter-icon active" data-filter="all" id="sendButton">Открыть</div>
@@ -186,6 +193,8 @@
           <div class="location-btn" onclick="centerOnUser()">
             <span>📍</span>
           </div>
+          
+          <button id="sendStatusBtn" class="send-status-btn">Загрузить статус</button>
           
           <div class="bottom-nav">
             <button class="nav-btn" id="chatBtn" onclick="showMessages()">💬</button>
