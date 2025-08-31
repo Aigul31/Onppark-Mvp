@@ -678,6 +678,16 @@ body {
   transform: scale(1.05);
 }
 
+.filter-icon.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.filter-icon.disabled:hover {
+  transform: none;
+}
+
 .location-btn {
   position: absolute;
   bottom: 100px;
