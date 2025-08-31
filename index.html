@@ -110,7 +110,8 @@
           
           <form id="registrationForm">
             <input type="text" id="name" placeholder="Имя" data-i18n-placeholder="name-placeholder" required>
-            <input type="text" id="telegram" placeholder="Telegram/email" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="text" id="telegram" placeholder="Telegram" required>
             <div class="password-field">
               <input type="password" id="password" placeholder="Пароль" required>
               <button type="button" class="show-password" data-i18n="show">Show</button>
@@ -225,8 +226,12 @@
               <span class="field-value" id="profileName">Ая</span>
             </div>
             <div class="profile-field">
+              <span class="field-label">Email:</span>
+              <span class="field-value" id="profileEmail">aigara1993@icloud.com</span>
+            </div>
+            <div class="profile-field">
               <span class="field-label" data-i18n="telegram">Telegram</span>
-              <span class="field-value" id="profileTelegram">aigara1993@icloud.com</span>
+              <span class="field-value" id="profileTelegram">@aigara1993</span>
             </div>
             <div class="profile-field">
               <span class="field-label" data-i18n="age">Возраст</span>

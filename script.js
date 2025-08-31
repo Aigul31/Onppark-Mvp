@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       
       const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
       const telegram = document.getElementById('telegram').value;
       const password = document.getElementById('password').value;
       
@@ -109,7 +110,9 @@ document.addEventListener('DOMContentLoaded', function() {
       const profileData = {
         user_id: `user_${Date.now()}`, // Уникальный ID пользователя
         name,
+        email,
         telegram,
+        password, // Добавляем пароль в профиль
         age: currentAge,
         interests: selectedInterests.join(', '),
         avatar_url: localStorage.getItem('userAvatarUrl') || null
@@ -177,10 +180,10 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         reader.readAsDataURL(file);
         
-        // Upload to Supabase Storage
-        const uploadedUrl = await uploadPhotoToSupabase(file);
+        // Upload to Object Storage
+        const uploadedUrl = await uploadPhotoToObjectStorage(file);
         if (uploadedUrl) {
-          console.log('Photo uploaded to Supabase:', uploadedUrl);
+          console.log('Photo uploaded to Object Storage:', uploadedUrl);
           // Store URL for later use
           localStorage.setItem('userAvatarUrl', uploadedUrl);
         }
@@ -1824,42 +1827,42 @@ function showPhotoSuccess() {
   const photoActions = document.querySelector('.photo-actions');
   photoActions.innerHTML = `
     <div style="text-align: center; color: #007AFF; font-weight: 600; margin-bottom: 16px;">
-      Фото успешно загружено в Supabase
+      Фото успешно загружено
     </div>
     <button class="photo-btn" onclick="selectPhoto()">Изменить фото</button>
     <button class="primary-btn" onclick="showInterests()">Дальше</button>
   `;
 }
 
-// Upload photo to Supabase Storage
-async function uploadPhotoToSupabase(file) {
-  if (!supabase) {
-    console.log('Supabase not available, skipping upload');
-    return null;
-  }
-  
+// Upload photo to Object Storage
+async function uploadPhotoToObjectStorage(file) {
   try {
-    const fileName = `avatar_${Date.now()}_${file.name}`;
+    // Получаем presigned URL для загрузки
+    const response = await fetch('/api/objects/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const { uploadURL } = await response.json();
     
-    const { data, error } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, file);
+    // Загружаем файл через presigned URL
+    const uploadResponse = await fetch(uploadURL, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type }
+    });
     
-    if (error) {
-      console.error('Error uploading file:', error);
+    if (uploadResponse.ok) {
+      // Формируем URL для доступа к загруженному файлу
+      const fileName = uploadURL.split('/').pop().split('?')[0];
+      const avatarUrl = `/objects/uploads/${fileName}`;
+      console.log('Photo uploaded to Object Storage:', avatarUrl);
+      return avatarUrl;
+    } else {
+      console.error('Failed to upload photo to Object Storage');
       return null;
     }
-    
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(fileName);
-    
-    console.log('Photo uploaded successfully:', urlData.publicUrl);
-    return urlData.publicUrl;
-    
   } catch (error) {
-    console.error('Error uploading to Supabase:', error);
+    console.error('Error uploading to Object Storage:', error);
     return null;
   }
 }
@@ -1879,6 +1882,10 @@ function loadProfileData() {
     if (profileName) profileName.textContent = profile.name || 'Ая';
     if (profileTelegram) profileTelegram.textContent = profile.telegram || 'Yaya2025';
     if (profileAge) profileAge.textContent = profile.age || '32';
+    
+    // Показать email если есть
+    const profileEmail = document.getElementById('profileEmail');
+    if (profileEmail) profileEmail.textContent = profile.email || 'Не указан';
     
     // Load uploaded photo if available
     if (profileImage && profile.avatar_url) {

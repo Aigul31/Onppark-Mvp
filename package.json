@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google-cloud/storage": "^7.17.0",
     "@supabase/supabase-js": "^2.56.0",
     "@types/memoizee": "^0.4.12",
     "memoizee": "^0.4.17",

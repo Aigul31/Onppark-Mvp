@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const { getAllProfiles, createProfile, getAllStatuses, createStatus, updateUserStatus, sendMessage, getMessages } = require('./database.js');
+const { ObjectStorageService, ObjectNotFoundError } = require('./objectStorage.js');
 
 const port = process.env.PORT || 5000;
 
@@ -217,10 +218,44 @@ const server = http.createServer(async (req, res) => {
       }
       return;
     }
+
+    // Object Storage для загрузки фото профилей (POST /api/objects/upload)
+    if (pathname === '/api/objects/upload' && req.method === 'POST') {
+      try {
+        const objectStorageService = new ObjectStorageService();
+        const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ uploadURL }));
+      } catch (error) {
+        console.error('Error getting upload URL:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to get upload URL' }));
+      }
+      return;
+    }
     
     // 404 для неизвестных API эндпоинтов
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'API endpoint not found' }));
+    return;
+  }
+
+  // Обслуживание загруженных фото (GET /objects/*)
+  if (pathname.startsWith('/objects/') && req.method === 'GET') {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectFile = await objectStorageService.getObjectEntityFile(pathname);
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      if (error instanceof ObjectNotFoundError) {
+        res.writeHead(404);
+        res.end('File not found');
+      } else {
+        console.error('Error serving object:', error);
+        res.writeHead(500);
+        res.end('Server error');
+      }
+    }
     return;
   }
 
