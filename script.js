@@ -334,49 +334,20 @@ function initializeMap() {
   // Create markers layer group
   markersLayer = L.layerGroup().addTo(map);
   
-  // Load statuses and profiles
-  loadStatuses();
-  loadProfiles();
-  
-  // Add active user markers
+  // Add active user markers FIRST
   addActiveUsers();
+  
+  // Load profiles  
+  loadProfiles();
   
   // Setup filter buttons
   setupUserStatusFilters();
 }
 
-// Load statuses from API
+// Load statuses from API (temporarily disabled to avoid conflicts with fake profiles)
 async function loadStatuses() {
-  try {
-    const response = await fetch('/api/statuses');
-    const statuses = await response.json();
-    console.log('Loaded statuses:', statuses);
-    
-    // Очищаем существующие маркеры статусов (но не пользовательский маркер)
-    map.eachLayer(function(layer) {
-      if (layer instanceof L.Marker && layer !== myMarker) {
-        map.removeLayer(layer);
-      }
-    });
-    
-    // Создаем маркеры для реальных статусов пользователей
-    statuses.forEach(status => {
-      if (status.latitude && status.longitude) {
-        // Создаем кастомную иконку для статуса
-        const statusIcon = getStatusIcon(status.icon);
-        const marker = L.marker([status.latitude, status.longitude], { icon: statusIcon })
-          .addTo(map)
-          .bindPopup(`
-            <div style="text-align: center;">
-              <b>${status.message || getStatusMessage(status.icon)}</b><br>
-              <small>Размещено: ${new Date(status.created_at).toLocaleTimeString()}</small>
-            </div>
-          `);
-      }
-    });
-  } catch (error) {
-    console.error('Error loading statuses:', error);
-  }
+  // Не загружаем реальные статусы чтобы не конфликтовать с фейковыми профилями
+  console.log('Status loading disabled to show fake profiles');
 }
 
 // Функция для создания иконок статусов
@@ -840,28 +811,28 @@ function getMockUsers() {
         },
         {
           id: 'user-1',
-          lat: 43.2215, lng: 76.8505,
+          lat: 43.2190, lng: 76.8480,  // Stefan - левее и ниже
           display_name: 'Stefan', age: 36, status: 'coffee',
           interests: ['hiking', 'co-travel'],
           avatar_url: 'attached_assets/Stefan-min_1756533746271.png'
         },
         {
           id: 'user-2',
-          lat: 43.2225, lng: 76.8520,
+          lat: 43.2250, lng: 76.8550,  // Asem - правее и выше
           display_name: 'Asem', age: 29, status: 'coffee',
           interests: ['coffee', 'photography'],
           avatar_url: 'attached_assets/Asem.png'
         },
         {
           id: 'user-3',
-          lat: 43.2385, lng: 76.8525,
+          lat: 43.2300, lng: 76.8600,  // Alice - еще правее и выше для прогулки
           display_name: 'Alice', age: 27, status: 'walk',
           interests: ['walking', 'nature'],
           avatar_url: 'attached_assets/Alice .png'
         },
         {
           id: 'user-4',
-          lat: 43.2380, lng: 76.9080,
+          lat: 43.2150, lng: 76.8700,  // Sasha - справа для путешествия
           display_name: 'Sasha', age: 40, status: 'travel',
           interests: ['business', 'travel'],
           avatar_url: 'attached_assets/Sasha.jpg'
