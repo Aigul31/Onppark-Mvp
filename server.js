@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const url = require('url');
 
 const port = process.env.PORT || 5000;
 
@@ -35,7 +36,56 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  let filePath = '.' + req.url;
+  const parsedUrl = url.parse(req.url, true);
+  const pathname = parsedUrl.pathname;
+
+  // API Routes
+  if (pathname.startsWith('/api/')) {
+    res.setHeader('Content-Type', 'application/json');
+    
+    // Эндпоинт для статуса (GET /api/status)
+    if (pathname === '/api/status' && req.method === 'GET') {
+      res.writeHead(200);
+      res.end(JSON.stringify({ status: 'active' }));
+      return;
+    }
+    
+    // Эндпоинт для статусов (GET /api/statuses)
+    if (pathname === '/api/statuses' && req.method === 'GET') {
+      const statuses = [
+        { id: 'coffee', name: 'Кофе', icon: '☕' },
+        { id: 'walk', name: 'Прогулка', icon: '🚶‍♀️' },
+        { id: 'travel', name: 'Путешествие', icon: '✈️' },
+        { id: 'business', name: 'Бизнес', icon: '💼' },
+        { id: 'study', name: 'Учеба', icon: '📚' }
+      ];
+      res.writeHead(200);
+      res.end(JSON.stringify(statuses));
+      return;
+    }
+    
+    // Загрузка профилей (GET /api/profiles)
+    if (pathname === '/api/profiles' && req.method === 'GET') {
+      const profiles = [
+        { name: 'Ая', age: 25, interests: ['Events', 'co-travel', 'стартап'] },
+        { name: 'Stefan', age: 36, interests: ['Hiking', 'co-travelling'] },
+        { name: 'Алиса', age: 27, interests: ['Walking', 'Nature'] },
+        { name: 'Асем', age: 29, interests: ['Coffee', 'Contents'] },
+        { name: 'Саша', age: 40, interests: ['Business', 'Events'] },
+      ];
+      res.writeHead(200);
+      res.end(JSON.stringify(profiles));
+      return;
+    }
+    
+    // 404 для неизвестных API эндпоинтов
+    res.writeHead(404);
+    res.end(JSON.stringify({ error: 'API endpoint not found' }));
+    return;
+  }
+
+  // Static file serving
+  let filePath = '.' + pathname;
   if (filePath === './') {
     filePath = './index.html';
   }
