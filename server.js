@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const { getAllProfiles, createProfile, getAllStatuses, createStatus } = require('./database.js');
 
 const port = process.env.PORT || 5000;
 
@@ -23,7 +24,7 @@ const mimeTypes = {
   '.wasm': 'application/wasm'
 };
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -50,49 +51,87 @@ const server = http.createServer((req, res) => {
       return;
     }
     
-    // Эндпоинт для статусов (GET /api/statuses)
+    // Эндпоинт для статусов (GET /api/statuses) - реальные данные из Supabase
     if (pathname === '/api/statuses' && req.method === 'GET') {
-      const statuses = [
-        { id: 'coffee', name: 'Кофе', icon: '☕' },
-        { id: 'walk', name: 'Прогулка', icon: '🚶‍♀️' },
-        { id: 'travel', name: 'Путешествие', icon: '✈️' },
-        { id: 'business', name: 'Бизнес', icon: '💼' },
-        { id: 'study', name: 'Учеба', icon: '📚' }
-      ];
-      res.writeHead(200);
-      res.end(JSON.stringify(statuses));
+      try {
+        const statuses = await getAllStatuses();
+        res.writeHead(200);
+        res.end(JSON.stringify(statuses));
+      } catch (error) {
+        console.error('Error fetching statuses:', error);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Failed to fetch statuses' }));
+      }
       return;
     }
     
-    // Загрузка профилей (GET /api/profiles)
+    // Загрузка профилей (GET /api/profiles) - реальные данные из Supabase
     if (pathname === '/api/profiles' && req.method === 'GET') {
-      const profiles = [
-        { name: 'Ая', age: 25, interests: ['Events', 'co-travel', 'стартап'] },
-        { name: 'Stefan', age: 36, interests: ['Hiking', 'co-travelling'] },
-        { name: 'Алиса', age: 27, interests: ['Walking', 'Nature'] },
-        { name: 'Асем', age: 29, interests: ['Coffee', 'Contents'] },
-        { name: 'Саша', age: 40, interests: ['Business', 'Events'] },
-      ];
-      res.writeHead(200);
-      res.end(JSON.stringify(profiles));
+      try {
+        const profiles = await getAllProfiles();
+        res.writeHead(200);
+        res.end(JSON.stringify(profiles));
+      } catch (error) {
+        console.error('Error fetching profiles:', error);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Failed to fetch profiles' }));
+      }
       return;
     }
     
-    // Отправка статуса (POST /api/status)
+    // Создание профиля (POST /api/profiles)
+    if (pathname === '/api/profiles' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      req.on('end', async () => {
+        try {
+          const profileData = JSON.parse(body);
+          console.log('Received profile:', profileData);
+          
+          // Сохраняем в Supabase
+          const savedProfile = await createProfile(profileData);
+          
+          res.writeHead(200);
+          res.end(JSON.stringify({ 
+            success: true, 
+            message: 'Профиль сохранён в Supabase!', 
+            data: savedProfile 
+          }));
+        } catch (error) {
+          console.error('Error saving profile:', error);
+          res.writeHead(500);
+          res.end(JSON.stringify({ success: false, error: 'Failed to save profile' }));
+        }
+      });
+      return;
+    }
+
+    // Отправка статуса (POST /api/status) - сохранение в Supabase
     if (pathname === '/api/status' && req.method === 'POST') {
       let body = '';
       req.on('data', chunk => {
         body += chunk.toString();
       });
-      req.on('end', () => {
+      req.on('end', async () => {
         try {
           const statusData = JSON.parse(body);
           console.log('Received status:', statusData);
+          
+          // Сохраняем в Supabase
+          const savedStatus = await createStatus(statusData);
+          
           res.writeHead(200);
-          res.end(JSON.stringify({ success: true, message: 'Статус сохранён!' }));
+          res.end(JSON.stringify({ 
+            success: true, 
+            message: 'Статус сохранён в Supabase!', 
+            data: savedStatus 
+          }));
         } catch (error) {
-          res.writeHead(400);
-          res.end(JSON.stringify({ success: false, error: 'Invalid JSON' }));
+          console.error('Error saving status:', error);
+          res.writeHead(500);
+          res.end(JSON.stringify({ success: false, error: 'Failed to save status' }));
         }
       });
       return;

@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Registration Form
   const registrationForm = document.getElementById('registrationForm');
   if (registrationForm) {
-    registrationForm.addEventListener('submit', function(e) {
+    registrationForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const name = document.getElementById('name').value;
@@ -107,13 +107,36 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Save profile data
       const profileData = {
+        user_id: `user_${Date.now()}`, // Уникальный ID пользователя
         name,
         telegram,
         age: currentAge,
-        gender: selectedGender
+        interests: selectedInterests.join(', '),
+        avatar_url: localStorage.getItem('userAvatarUrl') || null
       };
       
+      // Сохраняем локально для обратной совместимости
       localStorage.setItem('onparkProfile', JSON.stringify(profileData));
+      
+      // Отправляем в Supabase через API
+      try {
+        const response = await fetch('/api/profiles', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(profileData)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          console.log('Профиль сохранён в Supabase:', result.data);
+        } else {
+          console.error('Ошибка сохранения профиля:', result.error);
+        }
+      } catch (error) {
+        console.error('Ошибка отправки профиля:', error);
+      }
       
       // Show success message
       showSuccessMessage();
