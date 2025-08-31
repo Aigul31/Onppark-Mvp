@@ -10,6 +10,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@supabase/supabase-js": "^2.56.0"
+    "@supabase/supabase-js": "^2.56.0",
+    "@types/memoizee": "^0.4.12",
+    "memoizee": "^0.4.17",
+    "openid-client": "^6.7.1"
   }
 }
