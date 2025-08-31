@@ -1411,14 +1411,15 @@ function openChat() {
 
 async function loadChatMessages() {
   try {
-    const { data: messages, error } = await supabase
-      .from('messages')
-      .select('*')
-      .or(`and(from_user.eq.${currentUser.id},to_user.eq.${currentChatUser.id}),and(from_user.eq.${currentChatUser.id},to_user.eq.${currentUser.id})`)
-      .order('created_at', { ascending: true });
+    // Используем API вместо прямого Supabase
+    const response = await fetch(`/api/messages?user1=${currentUser.id}&user2=${currentChatUser.id}`);
+    const messages = await response.json();
     
-    if (error) {
-      console.error('Error loading messages:', error);
+    if (response.ok) {
+      chatMessages = messages || [];
+      console.log('Loaded real messages:', chatMessages);
+    } else {
+      console.error('Error loading messages:', messages.error);
       // Use mock messages for demo
       loadMockMessages();
       return;
@@ -1482,34 +1483,42 @@ async function sendMessage() {
   input.value = '';
   
   try {
-    // Try to save to Supabase
-    const { data: message, error } = await supabase
-      .from('messages')
-      .insert([
-        {
-          from_user: currentUser.id,
-          to_user: currentChatUser.id,
-          message: messageText
-        }
-      ])
-      .select()
-      .single();
+    // Отправляем через API
+    const response = await fetch('/api/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fromUserId: currentUser.id,
+        toUserId: currentChatUser.id,
+        message: messageText
+      })
+    });
     
-    if (error) {
-      console.error('Error sending message:', error);
+    const result = await response.json();
+    
+    if (response.ok) {
+      // Добавляем сообщение в локальный массив
+      const message = {
+        from_user_id: currentUser.id,
+        to_user_id: currentChatUser.id,
+        message: messageText,
+        created_at: new Date().toISOString()
+      };
+      
+      chatMessages.push(message);
+      renderChatMessages();
+      
+      // Simulate response after a delay
+      setTimeout(() => {
+        simulateResponse();
+      }, 2000);
+    } else {
+      console.error('Error sending message:', result.error);
       // Fallback to mock message
       addMockMessage(messageText);
-      return;
     }
-    
-    // Add to local messages
-    chatMessages.push(message);
-    renderChatMessages();
-    
-    // Simulate response after a delay
-    setTimeout(() => {
-      simulateResponse();
-    }, 2000);
     
   } catch (error) {
     console.error('Error sending message:', error);

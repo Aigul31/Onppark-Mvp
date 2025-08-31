@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
-const { getAllProfiles, createProfile, getAllStatuses, createStatus, updateUserStatus } = require('./database.js');
+const { getAllProfiles, createProfile, getAllStatuses, createStatus, updateUserStatus, sendMessage, getMessages } = require('./database.js');
 
 const port = process.env.PORT || 5000;
 
@@ -163,6 +163,58 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ success: false, error: 'Failed to update status' }));
         }
       });
+      return;
+    }
+    
+    // Отправка сообщения (POST /api/messages)
+    if (pathname === '/api/messages' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      req.on('end', async () => {
+        try {
+          const { fromUserId, toUserId, message } = JSON.parse(body);
+          console.log('Sending message:', { fromUserId, toUserId, message });
+          
+          const savedMessage = await sendMessage(fromUserId, toUserId, message);
+          
+          res.writeHead(200);
+          res.end(JSON.stringify({ 
+            success: true, 
+            message: 'Сообщение отправлено!', 
+            data: savedMessage 
+          }));
+        } catch (error) {
+          console.error('Error sending message:', error);
+          res.writeHead(500);
+          res.end(JSON.stringify({ success: false, error: 'Failed to send message' }));
+        }
+      });
+      return;
+    }
+    
+    // Получение сообщений (GET /api/messages?user1=X&user2=Y)
+    if (pathname === '/api/messages' && req.method === 'GET') {
+      try {
+        const query = parsedUrl.query;
+        const user1 = query.user1;
+        const user2 = query.user2;
+        
+        if (!user1 || !user2) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: 'Missing user1 or user2 parameter' }));
+          return;
+        }
+        
+        const messages = await getMessages(user1, user2);
+        res.writeHead(200);
+        res.end(JSON.stringify(messages));
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Failed to fetch messages' }));
+      }
       return;
     }
     

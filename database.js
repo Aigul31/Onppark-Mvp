@@ -1,8 +1,21 @@
-// Временное хранилище для статусов (в памяти)
+// Инициализация Supabase
+const { createClient } = require('@supabase/supabase-js');
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase credentials');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Временное хранилище для статусов (в памяти) - для быстрого доступа
 let userStatuses = new Map();
 let userProfiles = new Map();
 
-console.log('In-memory database initialized');
+console.log('Supabase database initialized');
 
 // Функции для работы с данными
 async function getAllProfiles() {
@@ -87,10 +100,75 @@ async function updateUserStatus(userId, newStatusData) {
   }
 }
 
+// Функции для сообщений
+async function createMessagesTable() {
+  try {
+    // Создаем таблицу messages в Supabase если её нет
+    const { error } = await supabase.rpc('create_messages_table');
+    if (error && !error.message.includes('already exists')) {
+      console.error('Error creating messages table:', error);
+    } else {
+      console.log('Messages table ready');
+    }
+  } catch (error) {
+    console.log('Messages table may already exist');
+  }
+}
+
+async function sendMessage(fromUserId, toUserId, messageText) {
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        from_user_id: fromUserId,
+        to_user_id: toUserId,
+        message: messageText,
+        created_at: new Date().toISOString()
+      })
+      .select();
+      
+    if (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+    
+    console.log('Message sent:', data[0]);
+    return data[0];
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
+}
+
+async function getMessages(userId1, userId2) {
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .or(`and(from_user_id.eq.${userId1},to_user_id.eq.${userId2}),and(from_user_id.eq.${userId2},to_user_id.eq.${userId1})`)
+      .order('created_at', { ascending: true });
+      
+    if (error) {
+      console.error('Error fetching messages:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    return [];
+  }
+}
+
+// Инициализация таблиц при запуске
+createMessagesTable();
+
 module.exports = {
   getAllProfiles,
   createProfile,
   getAllStatuses,
   createStatus,
-  updateUserStatus
+  updateUserStatus,
+  sendMessage,
+  getMessages
 };
