@@ -98,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
       
       const name = document.getElementById('name').value;
       const email = document.getElementById('email').value;
-      const telegram = document.getElementById('telegram').value;
       const password = document.getElementById('password').value;
       
       if (!selectedGender) {
@@ -111,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function() {
         user_id: `user_${Date.now()}`, // Уникальный ID пользователя
         name,
         email,
-        telegram,
         password, // Добавляем пароль в профиль
         age: currentAge,
         interests: selectedInterests.join(', '),
@@ -1502,7 +1500,7 @@ function loadMockMessages() {
       id: 1,
       from_user_id: currentChatUser.id,
       to_user_id: currentUser.id,
-      message: 'Hi! Ready to join u!',
+      message: 'Hi! im ready to join u!',
       created_at: new Date(Date.now() - 300000).toISOString() // 5 minutes ago
     }
   ];
@@ -1874,18 +1872,20 @@ function loadProfileData() {
     
     // Update profile screen
     const profileName = document.getElementById('profileName');
-    const profileTelegram = document.getElementById('profileTelegram');
     const profileAge = document.getElementById('profileAge');
     const profileInterests = document.getElementById('profileInterests');
     const profileImage = document.getElementById('profileImage');
     
     if (profileName) profileName.textContent = profile.name || 'Ая';
-    if (profileTelegram) profileTelegram.textContent = profile.telegram || 'Yaya2025';
     if (profileAge) profileAge.textContent = profile.age || '32';
     
     // Показать email если есть
     const profileEmail = document.getElementById('profileEmail');
     if (profileEmail) profileEmail.textContent = profile.email || 'Не указан';
+    
+    // Показать реальный пароль пользователя
+    const profilePassword = document.getElementById('profilePassword');
+    if (profilePassword) profilePassword.textContent = profile.password || '2025AyaS';
     
     // Load uploaded photo if available
     if (profileImage && profile.avatar_url) {
