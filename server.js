@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
-const { getAllProfiles, createProfile, getAllStatuses, createStatus } = require('./database.js');
+const { getAllProfiles, createProfile, getAllStatuses, createStatus, updateUserStatus } = require('./database.js');
 
 const port = process.env.PORT || 5000;
 
@@ -108,7 +108,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Отправка статуса (POST /api/status) - сохранение в Supabase
+    // Отправка статуса (POST /api/status) - создание нового статуса
     if (pathname === '/api/status' && req.method === 'POST') {
       let body = '';
       req.on('data', chunk => {
@@ -119,19 +119,48 @@ const server = http.createServer(async (req, res) => {
           const statusData = JSON.parse(body);
           console.log('Received status:', statusData);
           
-          // Сохраняем в Supabase
+          // Сохраняем статус (заменяет предыдущий если есть)
           const savedStatus = await createStatus(statusData);
           
           res.writeHead(200);
           res.end(JSON.stringify({ 
             success: true, 
-            message: 'Статус сохранён в Supabase!', 
+            message: 'Статус сохранён на 24 часа!', 
             data: savedStatus 
           }));
         } catch (error) {
           console.error('Error saving status:', error);
           res.writeHead(500);
           res.end(JSON.stringify({ success: false, error: 'Failed to save status' }));
+        }
+      });
+      return;
+    }
+    
+    // Обновление статуса (PUT /api/status) - изменение существующего статуса
+    if (pathname === '/api/status' && req.method === 'PUT') {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      req.on('end', async () => {
+        try {
+          const { user_id, ...statusUpdate } = JSON.parse(body);
+          console.log('Updating status for user:', user_id, statusUpdate);
+          
+          // Обновляем статус пользователя
+          const updatedStatus = await updateUserStatus(user_id, statusUpdate);
+          
+          res.writeHead(200);
+          res.end(JSON.stringify({ 
+            success: true, 
+            message: 'Статус обновлён!', 
+            data: updatedStatus 
+          }));
+        } catch (error) {
+          console.error('Error updating status:', error);
+          res.writeHead(500);
+          res.end(JSON.stringify({ success: false, error: 'Failed to update status' }));
         }
       });
       return;

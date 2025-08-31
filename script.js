@@ -379,13 +379,18 @@ async function sendStatus() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(async pos => {
       try {
+        // Получаем user_id из профиля или генерируем уникальный
+        const profileData = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
+        const userId = profileData.user_id || `user_${Date.now()}`;
+        
         const status = {
-          user_id: 'igara939',
+          user_id: userId,
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
-          icon: 'coffee', // Позже добавь выбор иконок
-          message: 'Успешно!'
+          icon: currentUserStatus,
+          message: getStatusMessage(currentUserStatus)
         };
+        
         const response = await fetch('/api/status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -394,7 +399,7 @@ async function sendStatus() {
         const data = await response.json();
         if (data.success) {
           loadStatuses();
-          alert('Статус сохранён!');
+          alert(`Статус "${getStatusMessage(currentUserStatus)}" сохранён на 24 часа!`);
         }
       } catch (error) {
         console.error('Error sending status:', error);
@@ -407,6 +412,69 @@ async function sendStatus() {
 let currentUserStatus = 'coffee'; // Default user status
 let currentFilter = 'all'; // Current filter: 'all', 'coffee', 'walk', 'travel'
 let myMarker = null; // User's own marker on map
+
+// Функция для получения сообщения статуса
+function getStatusMessage(statusIcon) {
+  const statusMessages = {
+    'coffee': 'Пью кофе ☕',
+    'walk': 'Гуляю 🚶‍♀️', 
+    'travel': 'Путешествую ✈️'
+  };
+  return statusMessages[statusIcon] || 'Активен';
+}
+
+// Обновление статуса (для смены типа статуса)
+async function updateStatus(newStatusType) {
+  const profileData = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
+  const userId = profileData.user_id;
+  
+  if (!userId) {
+    alert('Сначала создайте профиль');
+    return;
+  }
+  
+  try {
+    const statusUpdate = {
+      user_id: userId,
+      icon: newStatusType,
+      message: getStatusMessage(newStatusType)
+    };
+    
+    const response = await fetch('/api/status', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(statusUpdate)
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      currentUserStatus = newStatusType;
+      updateStatusButtons();
+      alert(`Статус изменён на "${getStatusMessage(newStatusType)}"`);
+      loadStatuses(); // Обновляем карту
+    } else {
+      alert('Ошибка обновления статуса');
+    }
+  } catch (error) {
+    console.error('Error updating status:', error);
+    alert('Ошибка обновления статуса');
+  }
+}
+
+// Обновление внешнего вида кнопок статуса
+function updateStatusButtons() {
+  const filterButtons = document.querySelectorAll('.filter-icon');
+  filterButtons.forEach(button => {
+    const filter = button.dataset.filter;
+    if (filter === currentUserStatus) {
+      button.classList.add('active');
+    } else if (filter !== 'all') {
+      button.classList.remove('active');
+    }
+  });
+}
 let currentLanguage = 'ru'; // Default language
 let supabase; // Supabase client
 let currentUser = null; // Current user data
@@ -1613,6 +1681,28 @@ document.addEventListener('DOMContentLoaded', function() {
   if (sendButton) {
     sendButton.addEventListener('click', sendStatus);
   }
+  
+  // Настройка обработчиков кнопок статуса
+  const filterButtons = document.querySelectorAll('.filter-icon');
+  filterButtons.forEach(button => {
+    const filter = button.dataset.filter;
+    if (filter !== 'all') {
+      button.addEventListener('click', function() {
+        // Если у пользователя уже есть статус, обновляем его
+        const profileData = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
+        if (profileData.user_id) {
+          updateStatus(filter);
+        } else {
+          // Если профиля нет, просто меняем выбранный статус
+          currentUserStatus = filter;
+          updateStatusButtons();
+        }
+      });
+    }
+  });
+  
+  // Инициализируем внешний вид кнопок
+  updateStatusButtons();
 });
 
 function showSuccessMessage() {
