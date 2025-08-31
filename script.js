@@ -413,7 +413,6 @@ async function sendStatus() {
         const data = await response.json();
         if (data.success) {
           loadStatuses();
-          alert(`Статус "${getStatusMessage(currentUserStatus)}" сохранён на 24 часа!`);
         }
       } catch (error) {
         console.error('Error sending status:', error);
@@ -466,7 +465,6 @@ async function updateStatus(newStatusType) {
     if (result.success) {
       currentUserStatus = newStatusType;
       updateStatusButtons();
-      alert(`Статус изменён на "${getStatusMessage(newStatusType)}"`);
       loadStatuses(); // Обновляем карту
     } else {
       alert('Ошибка обновления статуса');
