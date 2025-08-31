@@ -825,14 +825,14 @@ function getMockUsers() {
         },
         {
           id: 'user-3',
-          lat: 43.2300, lng: 76.8600,  // Alice - еще правее и выше для прогулки
+          lat: 43.2490, lng: 76.9150,  // Alice - пересечение Абая + Сейфуллина
           display_name: 'Alice', age: 27, status: 'walk',
           interests: ['walking', 'nature'],
           avatar_url: 'attached_assets/Alice .png'
         },
         {
           id: 'user-4',
-          lat: 43.2150, lng: 76.8700,  // Sasha - справа для путешествия
+          lat: 43.2510, lng: 76.9010,  // Sasha - пересечение Толе би + Калдаякова  
           display_name: 'Sasha', age: 40, status: 'travel',
           interests: ['business', 'travel'],
           avatar_url: 'attached_assets/Sasha.jpg'
