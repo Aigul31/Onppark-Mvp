@@ -1585,7 +1585,7 @@ document.addEventListener('DOMContentLoaded', function() {
     messagesBtn.onclick = openChatFromNotifications;
   }
   
-  // Set up send status button
+  // Set up send status button (now the "Открыть" filter button)
   const sendButton = document.getElementById('sendButton');
   if (sendButton) {
     sendButton.addEventListener('click', sendStatus);
