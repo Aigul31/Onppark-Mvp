@@ -809,6 +809,16 @@ async function addActiveUsers() {
 function getMockUsers() {
   return [
         {
+          id: 'onpark-admin',
+          lat: 43.2220, lng: 76.8510,
+          display_name: 'OnPark Поддержка', age: 25, status: 'coffee',
+          interests: ['помощь пользователям', 'техническая поддержка', 'развитие сообщества'],
+          avatar_url: '🎯',
+          isAdmin: true,
+          telegram: '@onpark_support',
+          description: 'Техническое лицо OnPark. Помогаем пользователям знакомиться и организовывать встречи!'
+        },
+        {
           id: 'user-1',
           lat: 43.2215, lng: 76.8505,
           display_name: 'Stefan', age: 36, status: 'coffee',
@@ -844,11 +854,11 @@ function displayFilteredUsers(users) {
   // Clear existing markers
   markersLayer.clearLayers();
   
-  // Always show all 4 fake profiles regardless of filter
-  const fakeProfiles = users.filter(user => ['user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
+  // Always show OnPark admin and all fake profiles regardless of filter
+  const fakeProfiles = users.filter(user => ['onpark-admin', 'user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
   
   // Filter other users based on current filter
-  const otherUsers = users.filter(user => !['user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
+  const otherUsers = users.filter(user => !['onpark-admin', 'user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
   const filteredOtherUsers = currentFilter === 'all' 
     ? otherUsers 
     : otherUsers.filter(user => user.status === currentFilter);
@@ -1061,6 +1071,18 @@ function showUserProfile(user) {
     ? `<img src="${user.avatar_url}" alt="${user.display_name}" class="profile-photo" />` 
     : `<span class="profile-emoji">${user.avatar_url || user.avatar || '👤'}</span>`;
   
+  // Специальное описание для OnPark поддержки
+  const aboutText = user.description || 'Активный пользователь OnPark';
+  
+  // Специальная кнопка для OnPark поддержки
+  const actionButton = user.isAdmin
+    ? `<button class="action-btn join-btn admin-btn" onclick="joinCompany('${user.id}', '${user.display_name || user.name}')">
+         💬 Связаться с поддержкой
+       </button>`
+    : `<button class="action-btn join-btn" onclick="joinCompany('${user.id}', '${user.display_name || user.name}')">
+         ${t('join-company')}
+       </button>`;
+
   profilePopup.innerHTML = `
     <div class="profile-popup-content">
       <div class="profile-header">
@@ -1068,16 +1090,16 @@ function showUserProfile(user) {
         <div class="profile-info">
           <h3>${user.display_name || user.name}, ${user.age}</h3>
           <p class="profile-status">${getStatusText(user.status)}</p>
+          ${user.telegram ? `<p class="telegram-contact">📧 ${user.telegram}</p>` : ''}
         </div>
         <button class="close-profile" onclick="closeUserProfile()">×</button>
       </div>
       <div class="profile-bio">
         <p><strong>Интересы:</strong> ${interests}</p>
+        <p><strong>О себе:</strong> ${aboutText}</p>
       </div>
       <div class="profile-actions">
-        <button class="action-btn join-btn" onclick="joinCompany('${user.id}', '${user.display_name || user.name}')">
-          ${t('join-company')}
-        </button>
+        ${actionButton}
       </div>
     </div>
   `;
@@ -1161,6 +1183,13 @@ async function joinCompany(userId, userName) {
   try {
     closeUserProfile();
     
+    // Специальная обработка для OnPark поддержки
+    if (userId === 'onpark-admin') {
+      // Прямое подключение к техническому лицу
+      createOnParkAdminConnection(userId, userName);
+      return;
+    }
+    
     // Check if connection already exists
     const { data: existingConnection, error: checkError } = await supabase
       .from('connections')
@@ -1212,6 +1241,43 @@ async function joinCompany(userId, userName) {
     console.error('Error creating connection:', error);
     createMockConnection(userId, userName);
   }
+}
+
+function createOnParkAdminConnection(userId, userName) {
+  // Добавляем OnPark поддержку в подтвержденные профили
+  const adminUser = allUsersData.find(u => u.id === userId);
+  if (adminUser && !confirmedProfiles.find(profile => profile.id === userId)) {
+    confirmedProfiles.push({
+      ...adminUser,
+      confirmDate: new Date().toISOString(),
+      chatEnabled: true
+    });
+  }
+  
+  // Показываем успешное подключение
+  showConnectionSuccess(userName);
+  
+  // Автоматически включаем чат
+  const chatBtn = document.querySelector('#chatBtn');
+  if (chatBtn) {
+    chatBtn.style.background = '#4CAF50';
+    chatBtn.style.color = 'white';
+    chatBtn.style.transform = 'scale(1.1)';
+    chatBtn.onclick = () => showMessages();
+  }
+  
+  // Добавляем приветственное сообщение от OnPark поддержки
+  setTimeout(() => {
+    if (!chatMessages.find(msg => msg.from_user_id === 'onpark-admin')) {
+      chatMessages.push({
+        id: Date.now(),
+        from_user_id: 'onpark-admin',
+        to_user_id: currentUser.id,
+        message: 'Привет! Добро пожаловать в OnPark! 🎯 Я здесь чтобы помочь вам знакомиться и находить интересных людей поблизости. Задавайте любые вопросы!',
+        created_at: new Date().toISOString()
+      });
+    }
+  }, 1000);
 }
 
 function createMockConnection(userId, userName) {

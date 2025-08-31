@@ -100,40 +100,30 @@ async function updateUserStatus(userId, newStatusData) {
   }
 }
 
-// Функции для сообщений
-async function createMessagesTable() {
-  try {
-    // Создаем таблицу messages в Supabase если её нет
-    const { error } = await supabase.rpc('create_messages_table');
-    if (error && !error.message.includes('already exists')) {
-      console.error('Error creating messages table:', error);
-    } else {
-      console.log('Messages table ready');
-    }
-  } catch (error) {
-    console.log('Messages table may already exist');
-  }
-}
+// Временное хранилище для сообщений в памяти
+let userMessages = new Map();
 
+// Функции для сообщений - используем память вместо Supabase для стабильности
 async function sendMessage(fromUserId, toUserId, messageText) {
   try {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        from_user_id: fromUserId,
-        to_user_id: toUserId,
-        message: messageText,
-        created_at: new Date().toISOString()
-      })
-      .select();
-      
-    if (error) {
-      console.error('Error sending message:', error);
-      throw error;
+    const message = {
+      id: Date.now(),
+      from_user_id: fromUserId,
+      to_user_id: toUserId,
+      message: messageText,
+      created_at: new Date().toISOString()
+    };
+    
+    // Создаем ключ для чата между двумя пользователями
+    const chatKey = [fromUserId, toUserId].sort().join('_');
+    
+    if (!userMessages.has(chatKey)) {
+      userMessages.set(chatKey, []);
     }
     
-    console.log('Message sent:', data[0]);
-    return data[0];
+    userMessages.get(chatKey).push(message);
+    console.log('Message sent:', message);
+    return message;
   } catch (error) {
     console.error('Error sending message:', error);
     throw error;
@@ -142,26 +132,17 @@ async function sendMessage(fromUserId, toUserId, messageText) {
 
 async function getMessages(userId1, userId2) {
   try {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .or(`and(from_user_id.eq.${userId1},to_user_id.eq.${userId2}),and(from_user_id.eq.${userId2},to_user_id.eq.${userId1})`)
-      .order('created_at', { ascending: true });
-      
-    if (error) {
-      console.error('Error fetching messages:', error);
-      return [];
-    }
+    // Создаем ключ для чата между двумя пользователями
+    const chatKey = [userId1, userId2].sort().join('_');
     
-    return data || [];
+    const messages = userMessages.get(chatKey) || [];
+    console.log('Retrieved messages:', messages);
+    return messages;
   } catch (error) {
     console.error('Error fetching messages:', error);
     return [];
   }
 }
-
-// Инициализация таблиц при запуске
-createMessagesTable();
 
 module.exports = {
   getAllProfiles,
