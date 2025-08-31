@@ -1910,3 +1910,61 @@ setInterval(() => {
     loadProfileData();
   }
 }, 1000);
+
+// Функция для показа экрана восстановления пароля
+function showForgotPassword() {
+  showScreen('forgotPasswordScreen');
+}
+
+// Обработчик формы восстановления пароля
+document.addEventListener('DOMContentLoaded', function() {
+  const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+  if (forgotPasswordForm) {
+    forgotPasswordForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('recoveryEmail').value;
+      
+      if (!email) {
+        alert('Пожалуйста, введите email');
+        return;
+      }
+      
+      // Показать уведомление об отправке ссылки
+      showRecoveryNotification();
+    });
+  }
+});
+
+// Функция показа уведомления о восстановлении пароля
+function showRecoveryNotification() {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #4CAF50;
+    color: white;
+    padding: 20px 30px;
+    border-radius: 16px;
+    font-size: 16px;
+    z-index: 10000;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    text-align: center;
+    max-width: 300px;
+  `;
+  
+  notification.innerHTML = `
+    <div style="font-size: 40px; margin-bottom: 10px;">📧</div>
+    <div>Ссылка для восстановления пароля отправлена на ваш email</div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    document.body.removeChild(notification);
+    // Вернуться на экран регистрации
+    showRegistration();
+  }, 3000);
+}
