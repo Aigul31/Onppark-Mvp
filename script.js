@@ -830,21 +830,21 @@ function getMockUsers() {
           lat: 43.2225, lng: 76.8520,
           display_name: 'Asem', age: 29, status: 'coffee',
           interests: ['coffee', 'photography'],
-          avatar_url: 'attached_assets/Асем-min_1756533735058.png'
+          avatar_url: 'attached_assets/Asem.png'
         },
         {
           id: 'user-3',
           lat: 43.2385, lng: 76.8525,
           display_name: 'Alice', age: 27, status: 'walk',
           interests: ['walking', 'nature'],
-          avatar_url: 'attached_assets/Алиса-min_1756533716406.png'
+          avatar_url: 'attached_assets/Alice .png'
         },
         {
           id: 'user-4',
           lat: 43.2380, lng: 76.9080,
           display_name: 'Sasha', age: 40, status: 'travel',
           interests: ['business', 'travel'],
-          avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
+          avatar_url: 'attached_assets/Sasha.jpg'
         }
       ];
 }
@@ -868,7 +868,7 @@ function displayFilteredUsers(users) {
   
   // Add markers for all visible users
   allVisibleUsers.forEach(user => {
-    const icon = getUserIcon(user.status || 'coffee');
+    const icon = getUserIcon(user.status || 'coffee', user);
     const marker = L.marker([user.lat, user.lng], {icon: icon})
       .addTo(markersLayer);
       
@@ -1004,7 +1004,7 @@ function addMockUsers() {
       lat: 43.2385, lng: 76.8525,
       display_name: 'Асем', age: 29, status: 'coffee',
       interests: ['coffee', 'photography'],
-      avatar_url: 'attached_assets/Асем-min_1756533735058.png'
+      avatar_url: 'attached_assets/Asem.png'
     },
     {
       id: 'user-4',
@@ -1018,14 +1018,14 @@ function addMockUsers() {
       lat: 43.2300, lng: 76.8600,
       display_name: 'Алиса', age: 27, status: 'walk',
       interests: ['walking', 'nature'],
-      avatar_url: 'attached_assets/Алиса-min_1756533716406.png'
+      avatar_url: 'attached_assets/Alice .png'
     },
     {
       id: 'user-6',
       lat: 43.2380, lng: 76.9080,
       display_name: 'Саша', age: 40, status: 'coffee',
       interests: ['business', 'events'],
-      avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
+      avatar_url: 'attached_assets/Sasha.jpg'
     }
   ];
   
@@ -1033,7 +1033,7 @@ function addMockUsers() {
   allUsersData = activeUsers;
   
   activeUsers.forEach(user => {
-    const icon = getUserIcon(user.status);
+    const icon = getUserIcon(user.status, user);
     const marker = L.marker([user.lat, user.lng], {icon: icon})
       .addTo(markersLayer);
       
@@ -1043,14 +1043,35 @@ function addMockUsers() {
   });
 }
 
-function getUserIcon(status) {
+function getUserIcon(status, user = null) {
+  // Если у пользователя есть фото, показываем его
+  if (user && user.avatar_url && user.avatar_url.includes('attached_assets')) {
+    return L.divIcon({
+      html: `<div style="background: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer; overflow: hidden;">
+               <img src="${user.avatar_url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="${user.display_name}" />
+             </div>`,
+      iconSize: [50, 50],
+      className: 'user-marker'
+    });
+  }
+  
+  // Для техлица OnPark или пользователей с эмодзи аватарами
+  if (user && user.avatar_url && !user.avatar_url.includes('attached_assets')) {
+    return L.divIcon({
+      html: `<div style="background: white; color: #333; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${user.avatar_url}</div>`,
+      iconSize: [40, 40],
+      className: 'user-marker'
+    });
+  }
+  
+  // Обычные иконки статусов
   const icons = {
     coffee: '☕',
     walk: '🚶‍♀️',
     travel: '✈️'
   };
   
-  const iconEmoji = icons[status] || '👤'; // Fallback to user icon if status undefined
+  const iconEmoji = icons[status] || '👤';
   
   return L.divIcon({
     html: `<div style="background: white; color: #333; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${iconEmoji}</div>`,
@@ -1393,7 +1414,7 @@ function initializePendingConnections() {
       id: 'conn-2', 
       from_user: 'user-2',
       from_user_name: 'Asem',
-      from_user_avatar: 'attached_assets/Асем-min_1756533735058.png',
+      from_user_avatar: 'attached_assets/Asem.png',
       message: 'Hi! Ready to join u!',
       timestamp: new Date(Date.now() - 180000) // 3 minutes ago
     }
