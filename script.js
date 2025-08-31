@@ -1186,8 +1186,8 @@ async function joinCompany(userId, userName) {
     const { data: existingConnection, error: checkError } = await supabase
       .from('connections')
       .select('*')
-      .eq('from_user', currentUser.id)
-      .eq('to_user', userId)
+      .eq('from_user_id', currentUser.id)
+      .eq('to_user_id', userId)
       .single();
     
     if (existingConnection) {
@@ -1200,8 +1200,8 @@ async function joinCompany(userId, userName) {
       .from('connections')
       .insert([
         {
-          from_user: currentUser.id,
-          to_user: userId,
+          from_user_id: currentUser.id,
+          to_user_id: userId,
           status: 'pending'
         }
       ])
@@ -1218,7 +1218,7 @@ async function joinCompany(userId, userName) {
     // Add to active connections
     activeConnections.push({
       id: connection.id,
-      to_user: userId,
+      to_user_id: userId,
       to_user_name: userName,
       status: 'pending'
     });
@@ -1297,8 +1297,8 @@ async function sendInitialMessage(userId, userName) {
       .from('messages')
       .insert([
         {
-          from_user: currentUser.id,
-          to_user: userId,
+          from_user_id: currentUser.id,
+          to_user_id: userId,
           message: initialMessage
         }
       ]);
@@ -1497,8 +1497,8 @@ function loadMockMessages() {
   chatMessages = [
     {
       id: 1,
-      from_user: currentChatUser.id,
-      to_user: currentUser.id,
+      from_user_id: currentChatUser.id,
+      to_user_id: currentUser.id,
       message: 'Hi! Ready to join u!',
       created_at: new Date(Date.now() - 300000).toISOString() // 5 minutes ago
     }
@@ -1512,7 +1512,7 @@ function renderChatMessages() {
   
   chatMessages.forEach(msg => {
     const messageDiv = document.createElement('div');
-    messageDiv.className = msg.from_user === currentUser.id ? 'message sent' : 'message received';
+    messageDiv.className = msg.from_user_id === currentUser.id ? 'message sent' : 'message received';
     
     const time = new Date(msg.created_at).toLocaleTimeString('ru-RU', {
       hour: '2-digit',
@@ -1587,8 +1587,8 @@ async function sendMessage() {
 function addMockMessage(messageText) {
   const mockMessage = {
     id: Date.now(),
-    from_user: currentUser.id,
-    to_user: currentChatUser.id,
+    from_user_id: currentUser.id,
+    to_user_id: currentChatUser.id,
     message: messageText,
     created_at: new Date().toISOString()
   };
@@ -1615,8 +1615,8 @@ function simulateResponse() {
   
   const responseMessage = {
     id: Date.now() + 1,
-    from_user: currentChatUser.id,
-    to_user: currentUser.id,
+    from_user_id: currentChatUser.id,
+    to_user_id: currentUser.id,
     message: randomResponse,
     created_at: new Date().toISOString()
   };
