@@ -851,11 +851,15 @@ function getMockUsers() {
 
 // Display users based on current filter
 function displayFilteredUsers(users) {
+  console.log('displayFilteredUsers called with:', users.length, 'users');
+  console.log('Users:', users.map(u => ({ id: u.id, name: u.display_name, status: u.status })));
+  
   // Clear existing markers
   markersLayer.clearLayers();
   
   // Always show OnPark admin and all fake profiles regardless of filter
   const fakeProfiles = users.filter(user => ['onpark-admin', 'user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
+  console.log('Fake profiles found:', fakeProfiles.length, fakeProfiles.map(u => u.display_name));
   
   // Filter other users based on current filter
   const otherUsers = users.filter(user => !['onpark-admin', 'user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
@@ -865,9 +869,11 @@ function displayFilteredUsers(users) {
   
   // Combine fake profiles (always visible) with filtered other users
   const allVisibleUsers = [...fakeProfiles, ...filteredOtherUsers];
+  console.log('Total visible users:', allVisibleUsers.length);
   
   // Add markers for all visible users
   allVisibleUsers.forEach(user => {
+    console.log('Adding marker for:', user.display_name, 'at coordinates:', user.lat, user.lng);
     const icon = getUserIcon(user.status || 'coffee', user);
     const marker = L.marker([user.lat, user.lng], {icon: icon})
       .addTo(markersLayer);
@@ -1044,11 +1050,14 @@ function addMockUsers() {
 }
 
 function getUserIcon(status, user = null) {
+  console.log('Creating icon for:', { status, user: user ? user.display_name : 'no user', avatar: user ? user.avatar_url : 'no avatar' });
+  
   // Если у пользователя есть фото, показываем его
   if (user && user.avatar_url && user.avatar_url.includes('attached_assets')) {
+    console.log('Using photo icon for:', user.display_name);
     return L.divIcon({
       html: `<div style="background: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer; overflow: hidden;">
-               <img src="${user.avatar_url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="${user.display_name}" />
+               <img src="${user.avatar_url}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 50%;" alt="${user.display_name}" onerror="console.error('Failed to load image:', this.src)" />
              </div>`,
       iconSize: [50, 50],
       className: 'user-marker'
@@ -1057,9 +1066,10 @@ function getUserIcon(status, user = null) {
   
   // Для техлица OnPark или пользователей с эмодзи аватарами
   if (user && user.avatar_url && !user.avatar_url.includes('attached_assets')) {
+    console.log('Using emoji icon for:', user.display_name);
     return L.divIcon({
-      html: `<div style="background: white; color: #333; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${user.avatar_url}</div>`,
-      iconSize: [40, 40],
+      html: `<div style="background: white; color: #333; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${user.avatar_url}</div>`,
+      iconSize: [45, 45],
       className: 'user-marker'
     });
   }
@@ -1072,6 +1082,7 @@ function getUserIcon(status, user = null) {
   };
   
   const iconEmoji = icons[status] || '👤';
+  console.log('Using status icon:', iconEmoji, 'for status:', status);
   
   return L.divIcon({
     html: `<div style="background: white; color: #333; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${iconEmoji}</div>`,
