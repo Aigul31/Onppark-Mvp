@@ -78,6 +78,26 @@ const server = http.createServer((req, res) => {
       return;
     }
     
+    // Отправка статуса (POST /api/status)
+    if (pathname === '/api/status' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      req.on('end', () => {
+        try {
+          const statusData = JSON.parse(body);
+          console.log('Received status:', statusData);
+          res.writeHead(200);
+          res.end(JSON.stringify({ success: true, message: 'Статус сохранён!' }));
+        } catch (error) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: 'Invalid JSON' }));
+        }
+      });
+      return;
+    }
+    
     // 404 для неизвестных API эндпоинтов
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'API endpoint not found' }));

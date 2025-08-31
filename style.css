@@ -213,6 +213,30 @@ body {
   transform: translateY(-2px);
 }
 
+.send-status-btn {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #007AFF;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.send-status-btn:hover {
+  background: #0056b3;
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+}
+
 .login-link {
   font-size: 14px;
   color: #666;

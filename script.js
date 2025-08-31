@@ -301,21 +301,84 @@ function initializeMap() {
   }
   
   // Initialize map centered on Almaty, Kazakhstan
-  map = L.map('map').setView([43.2220, 76.8512], 13);
+  map = L.map('map').setView([43.2776, 76.8957], 13); // Алматы
   
   // Add OpenStreetMap tiles
-  L.tileLayer('https://{s}.tile.openstreetMap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
   }).addTo(map);
   
   // Create markers layer group
   markersLayer = L.layerGroup().addTo(map);
+  
+  // Load statuses and profiles
+  loadStatuses();
+  loadProfiles();
   
   // Add active user markers
   addActiveUsers();
   
   // Setup filter buttons
   setupUserStatusFilters();
+}
+
+// Load statuses from API
+async function loadStatuses() {
+  try {
+    const response = await fetch('/api/statuses');
+    const statuses = await response.json();
+    statuses.forEach(status => {
+      // For demo, place markers at random locations around Almaty
+      const lat = 43.2776 + (Math.random() - 0.5) * 0.02;
+      const lng = 76.8957 + (Math.random() - 0.5) * 0.02;
+      L.marker([lat, lng])
+        .addTo(map)
+        .bindPopup(`${status.name} (${status.icon})`);
+    });
+  } catch (error) {
+    console.error('Error loading statuses:', error);
+  }
+}
+
+// Load profiles from API
+async function loadProfiles() {
+  try {
+    const response = await fetch('/api/profiles');
+    const profiles = await response.json();
+    console.log('Profiles:', profiles); // Для теста
+  } catch (error) {
+    console.error('Error loading profiles:', error);
+  }
+}
+
+// Send status to API
+async function sendStatus() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async pos => {
+      try {
+        const status = {
+          user_id: 'igara939',
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          icon: 'coffee', // Позже добавь выбор иконок
+          message: 'Успешно!'
+        };
+        const response = await fetch('/api/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(status)
+        });
+        const data = await response.json();
+        if (data.success) {
+          loadStatuses();
+          alert('Статус сохранён!');
+        }
+      } catch (error) {
+        console.error('Error sending status:', error);
+        alert('Ошибка при сохранении статуса');
+      }
+    });
+  }
 }
 
 let currentUserStatus = 'coffee'; // Default user status
@@ -1520,6 +1583,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const messagesBtn = document.getElementById('messagesBtn');
   if (messagesBtn) {
     messagesBtn.onclick = openChatFromNotifications;
+  }
+  
+  // Set up send status button
+  const sendButton = document.getElementById('sendButton');
+  if (sendButton) {
+    sendButton.addEventListener('click', sendStatus);
   }
 });
 
