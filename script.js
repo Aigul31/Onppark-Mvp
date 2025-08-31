@@ -374,7 +374,13 @@ const translations = {
     'no-confirmed-profiles': 'Нет подтвержденных профилей.',
     'send-request-from-map': 'Отправьте запрос на компанию с карты,',
     'they-will-appear-here': 'и они появятся здесь.',
-    'message-placeholder': 'Написать сообщение...'
+    'message-placeholder': 'Написать сообщение...',
+    'profile': 'Профиль',
+    'name': 'Имя',
+    'telegram': 'Telegram',
+    'age': 'Возраст',
+    'interests': 'Интересы',
+    'password': 'Пароль'
   },
   en: {
     'create-connections': 'Create Connections',
@@ -420,7 +426,13 @@ const translations = {
     'no-confirmed-profiles': 'No confirmed profiles.',
     'send-request-from-map': 'Send a company request from the map,',
     'they-will-appear-here': 'and they will appear here.',
-    'message-placeholder': 'Type a message...'
+    'message-placeholder': 'Type a message...',
+    'profile': 'Profile',
+    'name': 'Name',
+    'telegram': 'Telegram',
+    'age': 'Age',
+    'interests': 'Interests',
+    'password': 'Password'
   }
 }
 
@@ -622,7 +634,7 @@ function getMockUsers() {
         },
         {
           id: 'user-4',
-          lat: 43.2390, lng: 76.8530,
+          lat: 43.2380, lng: 76.9080,
           display_name: 'Sasha', age: 40, status: 'travel',
           interests: ['business', 'travel'],
           avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
@@ -803,7 +815,7 @@ function addMockUsers() {
     },
     {
       id: 'user-6',
-      lat: 43.2150, lng: 76.8400,
+      lat: 43.2380, lng: 76.9080,
       display_name: 'Саша', age: 40, status: 'coffee',
       interests: ['business', 'events'],
       avatar_url: 'attached_assets/Саша-min_1756533740790.jpg'
