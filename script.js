@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setLanguage(savedLang);
   
   // Initialize Supabase
-  const supabaseReady = initializeSupabase();
+  initializeSupabase();
   
   // Set current user (for demo, using a mock user)
   currentUser = {
@@ -212,28 +212,39 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Supabase Integration
-function initializeSupabase() {
+async function initializeSupabase() {
   try {
     // Initialize real Supabase if credentials are available
     if (window.supabase && typeof window.supabase.createClient === 'function') {
-      // For static deployment, credentials should be in a config file or build process
-      // For now, we'll try to get them from a potential config object or use placeholders
-      let supabaseUrl = 'https://your-project.supabase.co';
-      let supabaseKey = 'your-anon-key';
+      // Try to load configuration from environment variables via a secure endpoint
+      let supabaseUrl = null;
+      let supabaseKey = null;
       
-      // Try to get from global config if available
-      if (window.SUPABASE_CONFIG) {
-        supabaseUrl = window.SUPABASE_CONFIG.url;
-        supabaseKey = window.SUPABASE_CONFIG.key;
+      // For static deployment, try to fetch configuration securely
+      try {
+        // For Replit environments, we can try a local endpoint for config
+        const response = await fetch('/api/config');
+        if (response.ok) {
+          const config = await response.json();
+          supabaseUrl = config.url;
+          supabaseKey = config.key;
+        }
+      } catch (configError) {
+        // If config endpoint fails, check if config was provided in SUPABASE_CONFIG
+        if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
+          supabaseUrl = window.SUPABASE_CONFIG.url;
+          supabaseKey = window.SUPABASE_CONFIG.key;
+        }
       }
       
-      // Initialize Supabase client with real credentials
-      if (supabaseUrl !== 'https://your-project.supabase.co' && supabaseKey !== 'your-anon-key') {
+      // Initialize Supabase client with credentials if available
+      if (supabaseUrl && supabaseKey && supabaseUrl !== 'null' && supabaseKey !== 'null') {
         supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         console.log('Supabase initialized with credentials');
         return true;
       } else {
         console.log('Supabase credentials not configured, using mock data');
+        console.log('Please configure SUPABASE_URL and SUPABASE_ANON_KEY environment variables');
         return false;
       }
     } else {
