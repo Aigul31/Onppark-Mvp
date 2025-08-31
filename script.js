@@ -350,17 +350,60 @@ async function loadStatuses() {
   try {
     const response = await fetch('/api/statuses');
     const statuses = await response.json();
+    console.log('Loaded statuses:', statuses);
+    
+    // Очищаем существующие маркеры статусов (но не пользовательский маркер)
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.Marker && layer !== myMarker) {
+        map.removeLayer(layer);
+      }
+    });
+    
+    // Создаем маркеры для реальных статусов пользователей
     statuses.forEach(status => {
-      // For demo, place markers at random locations around Almaty
-      const lat = 43.2776 + (Math.random() - 0.5) * 0.02;
-      const lng = 76.8957 + (Math.random() - 0.5) * 0.02;
-      L.marker([lat, lng])
-        .addTo(map)
-        .bindPopup(`${status.name} (${status.icon})`);
+      if (status.latitude && status.longitude) {
+        // Создаем кастомную иконку для статуса
+        const statusIcon = getStatusIcon(status.icon);
+        const marker = L.marker([status.latitude, status.longitude], { icon: statusIcon })
+          .addTo(map)
+          .bindPopup(`
+            <div style="text-align: center;">
+              <b>${status.message || getStatusMessage(status.icon)}</b><br>
+              <small>Размещено: ${new Date(status.created_at).toLocaleTimeString()}</small>
+            </div>
+          `);
+      }
     });
   } catch (error) {
     console.error('Error loading statuses:', error);
   }
+}
+
+// Функция для создания иконок статусов
+function getStatusIcon(statusType) {
+  const iconHtml = {
+    'coffee': '☕',
+    'walk': '🚶‍♀️',
+    'travel': '✈️'
+  };
+  
+  return L.divIcon({
+    html: `<div style="
+      background: white;
+      border: 3px solid #4aa896;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    ">${iconHtml[statusType] || '📍'}</div>`,
+    className: 'custom-div-icon',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
+  });
 }
 
 // Load profiles from API
