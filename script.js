@@ -786,15 +786,12 @@ function centerOnUser() {
 async function addActiveUsers() {
   // Всегда используем фейковых пользователей для демо
   const mockUsers = getMockUsers();
-  console.log('🔥 Loading mock users:', mockUsers.length);
-  console.log('🔥 Mock users details:', mockUsers.map(u => ({ name: u.display_name, coordinates: [u.lat, u.lng], avatar: u.avatar_url })));
   
   // Добавляем реальных пользователей если есть
   try {
     const response = await fetch('/api/profiles');
     if (response.ok) {
       const realProfiles = await response.json();
-      console.log('Real profiles from database:', realProfiles.length);
       
       // Объединяем фейковых и реальных пользователей
       const allUsers = [...mockUsers];
@@ -817,20 +814,15 @@ async function addActiveUsers() {
       });
       
       allUsersData = allUsers;
-      console.log('🔥 Total users (fake + real):', allUsers.length);
-      console.log('🔥 Final users list:', allUsersData.map(u => ({ name: u.display_name, id: u.id })));
     } else {
       allUsersData = mockUsers;
-      console.log('Using only mock users:', mockUsers.length);
     }
   } catch (error) {
     console.error('Error loading real profiles:', error);
     allUsersData = mockUsers;
-    console.log('Fallback to mock users only:', mockUsers.length);
   }
   
   // Отображаем всех пользователей
-  console.log('🔥 Calling displayFilteredUsers with:', allUsersData.length, 'users');
   displayFilteredUsers(allUsersData);
 }
 
@@ -879,18 +871,13 @@ function getMockUsers() {
 
 // Display users based on current filter
 function displayFilteredUsers(users) {
-  console.log('🔥 displayFilteredUsers called with:', users.length, 'users');
-  console.log('🔥 Users data:', users.map(u => ({ id: u.id, name: u.display_name, coordinates: [u.lat, u.lng] })));
-  
   // Clear existing markers
   if (markersLayer) {
     markersLayer.clearLayers();
-    console.log('🔥 Cleared existing markers');
   }
   
   // Always show OnPark admin and all fake profiles regardless of filter
   const fakeProfiles = users.filter(user => ['onpark-admin', 'user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
-  console.log('🔥 Fake profiles found:', fakeProfiles.length, fakeProfiles.map(u => u.display_name));
   
   // Filter other users based on current filter
   const otherUsers = users.filter(user => !['onpark-admin', 'user-1', 'user-2', 'user-3', 'user-4'].includes(user.id));
@@ -900,29 +887,17 @@ function displayFilteredUsers(users) {
   
   // Combine fake profiles (always visible) with filtered other users
   const allVisibleUsers = [...fakeProfiles, ...filteredOtherUsers];
-  console.log('🔥 Total visible users:', allVisibleUsers.length);
-  console.log('🔥 Visible users:', allVisibleUsers.map(u => ({ name: u.display_name, lat: u.lat, lng: u.lng })));
   
   // Add markers for all visible users
-  allVisibleUsers.forEach((user, index) => {
-    console.log(`🔥 Creating marker ${index + 1}/${allVisibleUsers.length} for:`, user.display_name, 'at:', [user.lat, user.lng]);
-    
-    try {
-      const icon = getUserIcon(user.status || 'coffee', user);
-      const marker = L.marker([user.lat, user.lng], {icon: icon})
-        .addTo(markersLayer);
-        
-      marker.on('click', function() {
-        showUserProfile(user);
-      });
+  allVisibleUsers.forEach(user => {
+    const icon = getUserIcon(user.status || 'coffee', user);
+    const marker = L.marker([user.lat, user.lng], {icon: icon})
+      .addTo(markersLayer);
       
-      console.log(`🔥 ✅ Marker created successfully for ${user.display_name}`);
-    } catch (error) {
-      console.error(`🔥 ❌ Error creating marker for ${user.display_name}:`, error);
-    }
+    marker.on('click', function() {
+      showUserProfile(user);
+    });
   });
-  
-  console.log('🔥 All markers should be on map now!');
 }
 
 // Update map filter
@@ -1091,38 +1066,18 @@ function addMockUsers() {
 }
 
 function getUserIcon(status, user = null) {
-  // Если у пользователя есть фото, показываем его
-  if (user && user.avatar_url && user.avatar_url.includes('attached_assets')) {
-    return L.divIcon({
-      html: `<div style="background: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer; overflow: hidden;">
-               <img src="${user.avatar_url}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 50%;" alt="${user.display_name}" />
-             </div>`,
-      iconSize: [50, 50],
-      className: 'user-marker'
-    });
-  }
-  
-  // Для техлица OnPark или пользователей с эмодзи аватарами
-  if (user && user.avatar_url && !user.avatar_url.includes('attached_assets')) {
-    return L.divIcon({
-      html: `<div style="background: white; color: #333; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${user.avatar_url}</div>`,
-      iconSize: [45, 45],
-      className: 'user-marker'
-    });
-  }
-  
-  // Обычные иконки статусов
+  // Всегда показываем статусы как иконки, независимо от наличия фото
   const icons = {
     coffee: '☕',
     walk: '🚶‍♀️',
     travel: '✈️'
   };
   
-  const iconEmoji = icons[status] || '👤';
+  const iconEmoji = icons[status] || '☕'; // По умолчанию кофе
   
   return L.divIcon({
-    html: `<div style="background: white; color: #333; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${iconEmoji}</div>`,
-    iconSize: [40, 40],
+    html: `<div style="background: white; color: #333; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 3px solid #5CBAA8; box-shadow: 0 3px 10px rgba(0,0,0,0.3); cursor: pointer;">${iconEmoji}</div>`,
+    iconSize: [45, 45],
     className: 'user-marker'
   });
 }
