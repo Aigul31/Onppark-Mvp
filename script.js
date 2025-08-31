@@ -220,21 +220,10 @@ async function initializeSupabase() {
       let supabaseUrl = null;
       let supabaseKey = null;
       
-      // For static deployment, try to fetch configuration securely
-      try {
-        // For Replit environments, we can try a local endpoint for config
-        const response = await fetch('/api/config');
-        if (response.ok) {
-          const config = await response.json();
-          supabaseUrl = config.url;
-          supabaseKey = config.key;
-        }
-      } catch (configError) {
-        // If config endpoint fails, check if config was provided in SUPABASE_CONFIG
-        if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
-          supabaseUrl = window.SUPABASE_CONFIG.url;
-          supabaseKey = window.SUPABASE_CONFIG.key;
-        }
+      // For static deployment, get configuration from SUPABASE_CONFIG
+      if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
+        supabaseUrl = window.SUPABASE_CONFIG.url;
+        supabaseKey = window.SUPABASE_CONFIG.key;
       }
       
       // Initialize Supabase client with credentials if available
