@@ -389,8 +389,10 @@ function initializeMap() {
   // Setup filter buttons
   setupUserStatusFilters();
   
-  // Load real users from database
-  loadStatuses();
+  // Load real users from database with delay for initialization
+  setTimeout(() => {
+    loadStatuses();
+  }, 2000);
 }
 
 // Load statuses from API and display real users on map
@@ -549,7 +551,7 @@ async function sendStatus() {
           // Задержка для обеспечения сохранения в БД
           setTimeout(() => {
             loadStatuses();
-          }, 1000);
+          }, 2000);
         } else {
           console.error('Failed to save status:', data);
         }
