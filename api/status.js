@@ -5,14 +5,10 @@ module.exports = async (req, res) => {
   const supabase = getAdminClient();
 
   if (req.method === 'GET') {
-    // Получение активных статусов (не старше 24 часов)
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
+    // Получение всех статусов без фильтрации по времени
     const { data, error } = await supabase
-      .from('user_status')
-      .select('*')
-      .gte('created_at', twentyFourHoursAgo)
-      .order('created_at', { ascending: false })
+      .from('statuses')
+      .select('id, latitude, longitude, icon, message')
       .limit(100);
 
     if (error) return res.status(500).json({ error: error.message });
@@ -20,7 +16,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'POST') {
-    const { data, error } = await supabase.from('user_status').insert(req.body).select();
+    const { data, error } = await supabase.from('statuses').insert(req.body).select();
     if (error) return res.status(400).json({ error: error.message });
     return res.status(201).json(data?.[0] ?? null);
   }
@@ -30,8 +26,8 @@ module.exports = async (req, res) => {
     if (!id) return res.status(400).json({ error: 'id обязателен для обновления' });
 
     const { data, error } = await supabase
-      .from('user_status')
-      .update({ ...updateData, updated_at: new Date().toISOString() })
+      .from('statuses')
+      .update(updateData)
       .eq('id', id)
       .select();
 
