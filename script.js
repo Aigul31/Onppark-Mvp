@@ -459,11 +459,10 @@ async function updateStatus(newStatusType) {
       updateStatusButtons();
       loadStatuses(); // Обновляем карту
     } else {
-      alert('Ошибка обновления статуса');
+      console.log('Не удалось обновить статус');
     }
   } catch (error) {
     console.error('Error updating status:', error);
-    alert('Ошибка обновления статуса');
   }
 }
 
