@@ -253,9 +253,9 @@ document.addEventListener('DOMContentLoaded', function() {
   loadProfileData();
   
   // Auto-fill email if user exists
-  const savedProfile = localStorage.getItem('onparkProfile');
-  if (savedProfile) {
-    const profile = JSON.parse(savedProfile);
+  const savedProfileData = localStorage.getItem('onparkProfile');
+  if (savedProfileData) {
+    const profile = JSON.parse(savedProfileData);
     const emailField = document.getElementById('email');
     if (emailField && profile.email) {
       emailField.value = profile.email;
