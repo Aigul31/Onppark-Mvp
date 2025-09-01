@@ -16,6 +16,11 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   }
 })
 
+// Функция для получения админского клиента
+function getAdminClient() {
+  return supabaseAdmin
+}
+
 // Хелпер для CORS заголовков
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,4 +28,4 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 }
 
-module.exports = { supabaseAdmin, corsHeaders }
+module.exports = { supabaseAdmin, getAdminClient, corsHeaders }
