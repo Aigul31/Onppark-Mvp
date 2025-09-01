@@ -16,7 +16,15 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'POST') {
-    const { data, error } = await supabase.from('statuses').insert(req.body).select();
+    const { data, error } = await supabase
+      .from('statuses')
+      .insert([{ 
+        latitude: req.body.latitude, 
+        longitude: req.body.longitude, 
+        icon: req.body.icon, 
+        message: req.body.message 
+      }])
+      .select();
     if (error) return res.status(400).json({ error: error.message });
     return res.status(201).json(data?.[0] ?? null);
   }
