@@ -184,6 +184,11 @@ document.addEventListener('DOMContentLoaded', function() {
           console.log('Photo uploaded to Object Storage:', uploadedUrl);
           // Store URL for later use
           localStorage.setItem('userAvatarUrl', uploadedUrl);
+          
+          // Также обновляем в основном профиле
+          const currentProfile = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
+          currentProfile.avatar_url = uploadedUrl;
+          localStorage.setItem('onparkProfile', JSON.stringify(currentProfile));
         }
         
         setTimeout(() => {
@@ -403,8 +408,11 @@ async function sendStatus() {
           body: JSON.stringify(status)
         });
         const data = await response.json();
-        if (data.success) {
+        if (response.ok && data) {
+          console.log('Status saved successfully:', data);
           loadStatuses();
+        } else {
+          console.error('Failed to save status:', data);
         }
       } catch (error) {
         console.error('Error sending status:', error);
@@ -438,32 +446,10 @@ async function updateStatus(newStatusType) {
     return;
   }
   
-  try {
-    const statusUpdate = {
-      user_id: userId,
-      icon: newStatusType,
-      message: getStatusMessage(newStatusType)
-    };
-    
-    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(statusUpdate)
-    });
-    
-    const result = await response.json();
-    if (result.success) {
-      currentUserStatus = newStatusType;
-      updateStatusButtons();
-      loadStatuses(); // Обновляем карту
-    } else {
-      console.log('Не удалось обновить статус');
-    }
-  } catch (error) {
-    console.error('Error updating status:', error);
-  }
+  // Просто создаем новый статус вместо обновления
+  currentUserStatus = newStatusType;
+  updateStatusButtons();
+  await sendStatus(); // Создаем новый статус с новой геолокацией
 }
 
 // Обновление внешнего вида кнопок статуса
@@ -1865,7 +1851,7 @@ function loadProfileData() {
     const profileInterests = document.getElementById('profileInterests');
     const profileImage = document.getElementById('profileImage');
     
-    if (profileName) profileName.textContent = profile.name || 'Ая';
+    if (profileName) profileName.textContent = profile.display_name || profile.name || 'Ая';
     if (profileAge) profileAge.textContent = profile.age || '32';
     
     // Показать email если есть
