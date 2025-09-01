@@ -30,12 +30,19 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'PUT') {
-    const { id, ...updateData } = req.body;
+    const { id, latitude, longitude, icon, message } = req.body;
     if (!id) return res.status(400).json({ error: 'id обязателен для обновления' });
 
+    // Подготавливаем только те поля, которые нужно обновить
+    const updateFields = {};
+    if (latitude !== undefined) updateFields.latitude = latitude;
+    if (longitude !== undefined) updateFields.longitude = longitude;
+    if (icon !== undefined) updateFields.icon = icon;
+    if (message !== undefined) updateFields.message = message;
+    
     const { data, error } = await supabase
       .from('statuses')
-      .update(updateData)
+      .update(updateFields)
       .eq('id', id)
       .select();
 
