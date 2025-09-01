@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
     // Получение всех статусов без фильтрации по времени
     const { data, error } = await supabase
       .from('statuses')
-      .select('id, user_id, latitude, longitude, icon, message, created_at')
+      .select('id, user_id, latitude, longitude, icon, meessage, created_at')
       .limit(100);
 
     if (error) return res.status(500).json({ error: error.message });
