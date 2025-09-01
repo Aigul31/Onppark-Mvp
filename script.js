@@ -39,6 +39,11 @@ function showMap() {
   showScreen('mapScreen');
   setTimeout(() => {
     initializeMap();
+    // Автоматически отправляем статус при открытии карты
+    const profile = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
+    if (profile.user_id) {
+      sendStatus();
+    }
   }, 100);
 }
 
@@ -214,6 +219,23 @@ document.addEventListener('DOMContentLoaded', function() {
     chatBtn.addEventListener('click', showMessages);
   }
 
+  // Check for saved profile and auto-login
+  const savedProfile = localStorage.getItem('onparkProfile');
+  if (savedProfile) {
+    const profile = JSON.parse(savedProfile);
+    if (profile.user_id && profile.display_name) {
+      // User has a complete profile, go directly to map
+      console.log('Auto-login detected for user:', profile.display_name);
+      showMap();
+    } else {
+      // Incomplete profile, stay on welcome screen
+      console.log('Incomplete profile found, staying on welcome screen');
+    }
+  } else {
+    // No profile found, stay on welcome screen
+    console.log('No saved profile found, staying on welcome screen');
+  }
+  
   // Load saved profile data
   loadProfileData();
   
@@ -1935,11 +1957,79 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      // Показать уведомление об отправке ссылки
-      showRecoveryNotification();
+      // Ищем пользователя по email в Supabase
+      searchUserByEmail(email);
     });
   }
 });
+
+// Функция поиска пользователя по email
+async function searchUserByEmail(email) {
+  try {
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/profiles?email=${encodeURIComponent(email)}`);
+    
+    if (response.ok) {
+      const userData = await response.json();
+      
+      // Показываем пароль пользователя
+      showPasswordRecovery(userData.display_name, userData.password);
+      
+      // Также сохраняем данные для автоматического входа
+      const profileData = {
+        user_id: userData.user_id,
+        display_name: userData.display_name,
+        name: userData.display_name,
+        email: userData.email,
+        password: userData.password,
+        age: userData.age,
+        avatar_url: userData.avatar_url,
+        interests: userData.interests || ''
+      };
+      localStorage.setItem('onparkProfile', JSON.stringify(profileData));
+      
+    } else {
+      alert('Пользователь с таким email не найден');
+    }
+  } catch (error) {
+    console.error('Error searching user:', error);
+    alert('Ошибка поиска пользователя');
+  }
+}
+
+// Функция показа восстановленного пароля
+function showPasswordRecovery(displayName, password) {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 2px solid #4CAF50;
+    color: black;
+    padding: 30px;
+    border-radius: 16px;
+    font-size: 16px;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    text-align: center;
+    max-width: 300px;
+  `;
+  notification.innerHTML = `
+    <h3 style="margin: 0 0 15px 0; color: #4CAF50;">Пароль найден!</h3>
+    <p style="margin: 0 0 10px 0;"><strong>Пользователь:</strong> ${displayName}</p>
+    <p style="margin: 0 0 20px 0;"><strong>Пароль:</strong> ${password}</p>
+    <button onclick="this.parentElement.remove(); showMap();" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Войти</button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 10000);
+}
 
 // Функция показа уведомления о восстановлении пароля
 function showRecoveryNotification() {
