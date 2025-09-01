@@ -402,11 +402,14 @@ async function sendStatus() {
           message: getStatusMessage(currentUserStatus)
         };
         
+        console.log('Sending status:', status);
         const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(status)
         });
+        
+        console.log('Status response status:', response.status);
         const data = await response.json();
         if (response.ok && data) {
           console.log('Status saved successfully:', data);
@@ -734,29 +737,47 @@ async function addActiveUsers() {
   
   // Добавляем реальных пользователей если есть
   try {
-    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`);
-    if (response.ok) {
-      const realProfiles = await response.json();
+    // Получаем статусы с координатами
+    const statusResponse = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`);
+    const profilesResponse = await fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`);
+    
+    if (statusResponse.ok && profilesResponse.ok) {
+      const statuses = await statusResponse.json();
+      const profiles = await profilesResponse.json();
+      
+      console.log('Loaded statuses:', statuses);
+      console.log('Loaded profiles:', profiles);
       
       // Объединяем фейковых и реальных пользователей
       const allUsers = [...mockUsers];
       
-      // Добавляем реальных пользователей если у них есть координаты
-      realProfiles.forEach(profile => {
-        if (profile.latitude && profile.longitude) {
-          allUsers.push({
-            id: `real-${profile.id}`,
-            lat: profile.latitude,
-            lng: profile.longitude,
-            display_name: profile.name,
-            age: profile.age,
-            status: profile.status || 'coffee',
-            interests: profile.interests ? profile.interests.split(',') : [],
-            avatar_url: profile.avatar_url,
-            telegram: profile.telegram
-          });
-        }
+      // Создаем карту профилей для быстрого поиска
+      const profileMap = {};
+      profiles.forEach(profile => {
+        profileMap[profile.user_id] = profile;
       });
+      
+      // Добавляем реальных пользователей по статусам с координатами
+      if (Array.isArray(statuses)) {
+        statuses.forEach(status => {
+          if (status.latitude && status.longitude && status.user_id) {
+            const profile = profileMap[status.user_id];
+            if (profile) {
+              allUsers.push({
+                id: `real-${status.user_id}`,
+                lat: status.latitude,
+                lng: status.longitude,
+                display_name: profile.display_name || profile.name,
+                age: profile.age,
+                status: status.icon || 'coffee',
+                interests: profile.interests ? profile.interests.split(',') : [],
+                avatar_url: profile.avatar_url,
+                telegram: profile.telegram
+              });
+            }
+          }
+        });
+      }
       
       allUsersData = allUsers;
     } else {
@@ -1864,7 +1885,16 @@ function loadProfileData() {
     
     // Load uploaded photo if available
     if (profileImage && profile.avatar_url) {
+      console.log('Setting profile image:', profile.avatar_url);
       profileImage.src = profile.avatar_url;
+      profileImage.onerror = function() {
+        console.error('Failed to load profile image:', profile.avatar_url);
+      };
+      profileImage.onload = function() {
+        console.log('Profile image loaded successfully:', profile.avatar_url);
+      };
+    } else {
+      console.log('No profile image to load. profileImage element:', !!profileImage, 'avatar_url:', profile.avatar_url);
     }
     
     if (selectedInterests.length > 0) {
