@@ -384,12 +384,75 @@ function initializeMap() {
   
   // Setup filter buttons
   setupUserStatusFilters();
+  
+  // Load real users from database
+  loadStatuses();
 }
 
-// Load statuses from API (temporarily disabled to avoid conflicts with fake profiles)
+// Load statuses from API and display real users on map
 async function loadStatuses() {
-  // Не загружаем реальные статусы чтобы не конфликтовать с фейковыми профилями
-  console.log('Status loading disabled to show fake profiles');
+  try {
+    // Получаем статусы и профили из API
+    const [statusResponse, profilesResponse] = await Promise.all([
+      fetch(`${window.APP_CONFIG.API_BASE}/api/status`),
+      fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`)
+    ]);
+    
+    if (statusResponse.ok && profilesResponse.ok) {
+      const statuses = await statusResponse.json();
+      const profiles = await profilesResponse.json();
+      
+      console.log('Loaded real statuses:', statuses);
+      console.log('Loaded real profiles:', profiles);
+      
+      // Создаем карту профилей для быстрого поиска
+      const profileMap = {};
+      profiles.forEach(profile => {
+        profileMap[profile.user_id] = profile;
+      });
+      
+      // Очищаем предыдущие маркеры реальных пользователей
+      if (window.realUserMarkers) {
+        window.realUserMarkers.forEach(marker => map.removeLayer(marker));
+      }
+      window.realUserMarkers = [];
+      
+      // Получаем текущего пользователя
+      const currentProfile = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
+      
+      // Добавляем маркеры для каждого статуса
+      statuses.forEach(status => {
+        if (!status.latitude || !status.longitude) return;
+        
+        const profile = profileMap[status.user_id];
+        if (!profile) return;
+        
+        // Пропускаем текущего пользователя
+        if (currentProfile.user_id === status.user_id) return;
+        
+        const marker = L.marker([status.latitude, status.longitude], {
+          icon: getStatusIcon(status.icon)
+        }).addTo(map);
+        
+        // Добавляем попап с информацией о пользователе
+        marker.bindPopup(`
+          <div style="text-align: center; min-width: 200px;">
+            ${profile.avatar_url ? `<img src="${profile.avatar_url}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">` : ''}
+            <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${profile.display_name}</div>
+            <div style="color: #4aa896; margin-bottom: 5px;">${status.message}</div>
+            <div style="font-size: 12px; color: #666;">Возраст: ${profile.age}</div>
+            ${profile.interests ? `<div style="font-size: 12px; color: #666; margin-top: 5px;">Интересы: ${profile.interests}</div>` : ''}
+          </div>
+        `);
+        
+        window.realUserMarkers.push(marker);
+      });
+      
+      console.log(`Добавлено ${window.realUserMarkers.length} реальных пользователей на карту`);
+    }
+  } catch (error) {
+    console.error('Error loading real statuses:', error);
+  }
 }
 
 // Функция для создания иконок статусов
