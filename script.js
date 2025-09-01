@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Отправляем в Supabase через API
       try {
-        const response = await fetch('/api/profiles', {
+        const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -236,30 +236,21 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Supabase Integration
+let supabase = null;
+
 async function initializeSupabase() {
   try {
-    // Initialize real Supabase if credentials are available
+    if (!window.APP_CONFIG || !window.APP_CONFIG.SUPABASE_URL || !window.APP_CONFIG.SUPABASE_ANON_KEY) {
+      console.log('Supabase credentials not configured in APP_CONFIG, using mock data');
+      return false;
+    }
+    
+    const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG;
+    
     if (window.supabase && typeof window.supabase.createClient === 'function') {
-      // Try to load configuration from environment variables via a secure endpoint
-      let supabaseUrl = null;
-      let supabaseKey = null;
-      
-      // For static deployment, get configuration from SUPABASE_CONFIG
-      if (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key) {
-        supabaseUrl = window.SUPABASE_CONFIG.url;
-        supabaseKey = window.SUPABASE_CONFIG.key;
-      }
-      
-      // Initialize Supabase client with credentials if available
-      if (supabaseUrl && supabaseKey && supabaseUrl !== 'null' && supabaseKey !== 'null') {
-        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        console.log('Supabase initialized with credentials');
-        return true;
-      } else {
-        console.log('Supabase credentials not configured, using mock data');
-        console.log('Please configure SUPABASE_URL and SUPABASE_ANON_KEY environment variables');
-        return false;
-      }
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('Supabase initialized with credentials');
+      return true;
     } else {
       console.log('Supabase library not loaded, using mock data');
       return false;
@@ -381,7 +372,7 @@ function getStatusIcon(statusType) {
 // Load profiles from API
 async function loadProfiles() {
   try {
-    const response = await fetch('/api/profiles');
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`);
     const profiles = await response.json();
     console.log('Profiles:', profiles); // Для теста
   } catch (error) {
@@ -406,7 +397,7 @@ async function sendStatus() {
           message: getStatusMessage(currentUserStatus)
         };
         
-        const response = await fetch('/api/status', {
+        const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(status)
@@ -454,7 +445,7 @@ async function updateStatus(newStatusType) {
       message: getStatusMessage(newStatusType)
     };
     
-    const response = await fetch('/api/status', {
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -489,7 +480,6 @@ function updateStatusButtons() {
   });
 }
 let currentLanguage = 'ru'; // Default language
-let supabase; // Supabase client
 let currentUser = null; // Current user data
 let confirmedProfiles = []; // List of confirmed profiles for messaging
 let activeConnections = []; // Active connection requests
@@ -759,7 +749,7 @@ async function addActiveUsers() {
   
   // Добавляем реальных пользователей если есть
   try {
-    const response = await fetch('/api/profiles');
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`);
     if (response.ok) {
       const realProfiles = await response.json();
       
@@ -1471,7 +1461,7 @@ function openChat() {
 async function loadChatMessages() {
   try {
     // Используем API вместо прямого Supabase
-    const response = await fetch(`/api/messages?user1=${currentUser.id}&user2=${currentChatUser.id}`);
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/messages?user1=${currentUser.id}&user2=${currentChatUser.id}`);
     const messages = await response.json();
     
     if (response.ok) {
@@ -1543,7 +1533,7 @@ async function sendMessage() {
   
   try {
     // Отправляем через API
-    const response = await fetch('/api/messages', {
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -1836,7 +1826,7 @@ function showPhotoSuccess() {
 async function uploadPhotoToObjectStorage(file) {
   try {
     // Получаем presigned URL для загрузки
-    const response = await fetch('/api/objects/upload', {
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/objects/upload`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });

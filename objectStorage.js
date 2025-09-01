@@ -1,6 +1,8 @@
 const { Storage, File } = require("@google-cloud/storage");
 const { randomUUID } = require("crypto");
 
+// ВНИМАНИЕ: REPLIT_SIDECAR_ENDPOINT нельзя изменить - это системный эндпоинт Replit для Object Storage
+// На продакшне это будет работать только в среде Replit. Для других хостингов нужен альтернативный подход.
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
 // The object storage client is used to interact with the object storage service.

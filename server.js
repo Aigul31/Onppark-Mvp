@@ -1,3 +1,8 @@
+/* 
+ * OnPark Express Server
+ * На Vercel статика обслуживается без Express - этот сервер нужен только для разработки.
+ * В продакшне API эндпоинты должны быть созданы как Vercel Serverless Functions в папке /api.
+ */
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -293,5 +298,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(`Server running at http://0.0.0.0:${port}/`);
+  console.log(`Server running on port ${port}`);
 });
