@@ -105,8 +105,21 @@ document.addEventListener('DOMContentLoaded', function() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       
+      // Проверяем, возвращается ли пользователь (email заполнен автоматически)
+      const savedProfile = localStorage.getItem('onparkProfile');
+      if (savedProfile && email && password && !name) {
+        // Это вход существующего пользователя
+        await loginExistingUser(email, password);
+        return;
+      }
+
       if (!selectedGender) {
         alert('Пожалуйста, выберите пол');
+        return;
+      }
+      
+      if (!name) {
+        alert('Пожалуйста, введите имя');
         return;
       }
       
@@ -238,6 +251,16 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Load saved profile data
   loadProfileData();
+  
+  // Auto-fill email if user exists
+  const savedProfile = localStorage.getItem('onparkProfile');
+  if (savedProfile) {
+    const profile = JSON.parse(savedProfile);
+    const emailField = document.getElementById('email');
+    if (emailField && profile.email) {
+      emailField.value = profile.email;
+    }
+  }
   
   // Load saved language
   const savedLang = localStorage.getItem('language') || 'ru';
@@ -1986,6 +2009,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// Функция входа существующего пользователя из главной формы
+async function loginExistingUser(email, password) {
+  try {
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/profiles?email=${encodeURIComponent(email)}`);
+    
+    if (response.ok) {
+      const userData = await response.json();
+      
+      if (userData.password === password) {
+        // Успешный вход
+        const profileData = {
+          user_id: userData.user_id,
+          display_name: userData.display_name,
+          name: userData.display_name,
+          email: userData.email,
+          password: userData.password,
+          age: userData.age,
+          avatar_url: userData.avatar_url,
+          interests: userData.interests || ''
+        };
+        localStorage.setItem('onparkProfile', JSON.stringify(profileData));
+        
+        console.log('Successful login for existing user:', userData.display_name);
+        showMap(); // Переходим на карту
+      } else {
+        alert('Неверный пароль');
+      }
+    } else {
+      alert('Пользователь с таким email не найден. Пожалуйста, заполните имя для создания нового профиля.');
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    alert('Ошибка входа');
+  }
+}
 
 // Функция входа пользователя
 async function loginUser(email, password) {

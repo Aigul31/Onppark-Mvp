@@ -114,73 +114,10 @@
             </div>
             
             <button type="submit" class="primary-btn" data-i18n="create-profile">Создать профиль</button>
-            
-            <div style="text-align: center; margin-top: 20px;">
-              <span style="color: #666;">Уже есть аккаунт?</span>
-              <a href="#" onclick="showLoginScreen()" style="color: #007AFF; text-decoration: none; margin-left: 5px;">Войти</a>
-            </div>
           </form>
         </div>
       </div>
 
-      <!-- Login Screen -->
-      <div id="loginScreen" class="screen">
-        <div class="status-bar">
-        </div>
-        
-        <div class="welcome-content">
-          <div class="header">
-            <div class="logo">O</div>
-            <span class="logo-text">nPark</span>
-          </div>
-          
-          <h2 style="text-align: center; margin: 30px 0; color: #333;">Войти</h2>
-          
-          <form id="loginForm">
-            <input type="email" id="loginEmail" placeholder="Email" required>
-            <div class="password-field">
-              <input type="password" id="loginPassword" placeholder="Пароль" required>
-              <button type="button" class="show-password" onclick="togglePasswordVisibility('loginPassword')">Show</button>
-            </div>
-            
-            <div class="forgot-password">
-              <a href="#" onclick="showForgotPasswordScreen()" data-i18n="forgot-password">Забыли пароль?</a>
-            </div>
-            
-            <button type="submit" class="primary-btn">Войти</button>
-            
-            <div style="text-align: center; margin-top: 20px;">
-              <span style="color: #666;">Нет аккаунта?</span>
-              <a href="#" onclick="showScreen('welcomeScreen')" style="color: #007AFF; text-decoration: none; margin-left: 5px;">Создать профиль</a>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Forgot Password Screen -->
-      <div id="forgotPasswordScreen" class="screen">
-        <div class="status-bar">
-        </div>
-        
-        <div class="welcome-content">
-          <div class="header">
-            <div class="logo">O</div>
-            <span class="logo-text">nPark</span>
-          </div>
-          
-          <h2 style="text-align: center; margin: 30px 0; color: #333;">Восстановление пароля</h2>
-          
-          <form id="forgotPasswordForm">
-            <input type="email" id="recoveryEmail" placeholder="Введите ваш email" required>
-            
-            <button type="submit" class="primary-btn">Отправить</button>
-            
-            <div style="text-align: center; margin-top: 20px;">
-              <a href="#" onclick="showScreen('loginScreen')" style="color: #007AFF; text-decoration: none;">Назад к входу</a>
-            </div>
-          </form>
-        </div>
-      </div>
 
       <!-- Photo Upload Screen -->
       <div id="photoScreen" class="screen">
