@@ -1938,9 +1938,89 @@ setInterval(() => {
   }
 }, 1000);
 
+// Функция для показа экрана входа
+function showLoginScreen() {
+  showScreen('loginScreen');
+}
+
 // Функция для показа экрана восстановления пароля
 function showForgotPassword() {
   showScreen('forgotPasswordScreen');
+}
+
+// Функция для показа экрана восстановления пароля с нового экрана
+function showForgotPasswordScreen() {
+  showScreen('forgotPasswordScreen');
+}
+
+// Функция для переключения видимости пароля
+function togglePasswordVisibility(inputId) {
+  const input = document.getElementById(inputId);
+  const button = input.nextElementSibling;
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    button.textContent = 'Hide';
+  } else {
+    input.type = 'password';
+    button.textContent = 'Show';
+  }
+}
+
+// Обработчик формы входа
+document.addEventListener('DOMContentLoaded', function() {
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      if (!email || !password) {
+        alert('Пожалуйста, заполните все поля');
+        return;
+      }
+      
+      await loginUser(email, password);
+    });
+  }
+});
+
+// Функция входа пользователя
+async function loginUser(email, password) {
+  try {
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/profiles?email=${encodeURIComponent(email)}`);
+    
+    if (response.ok) {
+      const userData = await response.json();
+      
+      if (userData.password === password) {
+        // Успешный вход
+        const profileData = {
+          user_id: userData.user_id,
+          display_name: userData.display_name,
+          name: userData.display_name,
+          email: userData.email,
+          password: userData.password,
+          age: userData.age,
+          avatar_url: userData.avatar_url,
+          interests: userData.interests || ''
+        };
+        localStorage.setItem('onparkProfile', JSON.stringify(profileData));
+        
+        console.log('Successful login for user:', userData.display_name);
+        showMap(); // Переходим на карту
+      } else {
+        alert('Неверный пароль');
+      }
+    } else {
+      alert('Пользователь с таким email не найден');
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    alert('Ошибка входа');
+  }
 }
 
 // Обработчик формы восстановления пароля
