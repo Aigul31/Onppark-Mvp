@@ -39,6 +39,10 @@ function showMap() {
   showScreen('mapScreen');
   setTimeout(() => {
     initializeMap();
+    
+    // Сначала загружаем других пользователей
+    loadStatuses();
+    
     // Автоматически отправляем статус при открытии карты
     const profile = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
     if (profile.user_id) {
@@ -402,8 +406,9 @@ async function loadStatuses() {
       const statuses = await statusResponse.json();
       const profiles = await profilesResponse.json();
       
-      console.log('Loaded real statuses:', statuses);
-      console.log('Loaded real profiles:', profiles);
+      console.log('=== ОТЛАДКА ЗАГРУЗКИ РЕАЛЬНЫХ ПОЛЬЗОВАТЕЛЕЙ ===');
+      console.log('Загружено статусов:', statuses.length, statuses);
+      console.log('Загружено профилей:', profiles.length, profiles);
       
       // Создаем карту профилей для быстрого поиска
       const profileMap = {};
@@ -421,29 +426,49 @@ async function loadStatuses() {
       const currentProfile = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
       
       // Добавляем маркеры для каждого статуса
-      statuses.forEach(status => {
-        if (!status.latitude || !status.longitude) return;
+      console.log('Текущий пользователь:', currentProfile.user_id);
+      statuses.forEach((status, index) => {
+        console.log(`Обрабатываем статус ${index}:`, status);
+        
+        if (!status.latitude || !status.longitude) {
+          console.log('Пропускаем - нет координат');
+          return;
+        }
         
         const profile = profileMap[status.user_id];
-        if (!profile) return;
+        if (!profile) {
+          console.log('Пропускаем - нет профиля для user_id:', status.user_id);
+          return;
+        }
         
         // Пропускаем текущего пользователя
-        if (currentProfile.user_id === status.user_id) return;
+        if (currentProfile.user_id === status.user_id) {
+          console.log('Пропускаем - это текущий пользователь');
+          return;
+        }
+        
+        console.log('Создаем маркер для пользователя:', profile.display_name);
         
         const marker = L.marker([status.latitude, status.longitude], {
           icon: getStatusIcon(status.icon)
         }).addTo(map);
         
         // Добавляем попап с информацией о пользователе
-        marker.bindPopup(`
+        const popupContent = `
           <div style="text-align: center; min-width: 200px;">
             ${profile.avatar_url ? `<img src="${profile.avatar_url}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">` : ''}
             <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${profile.display_name}</div>
             <div style="color: #4aa896; margin-bottom: 5px;">${status.message}</div>
             <div style="font-size: 12px; color: #666;">Возраст: ${profile.age}</div>
             ${profile.interests ? `<div style="font-size: 12px; color: #666; margin-top: 5px;">Интересы: ${profile.interests}</div>` : ''}
+            <button onclick="startChat('${status.user_id}', '${profile.display_name}')" 
+                    style="background: #4aa896; color: white; border: none; border-radius: 15px; 
+                           padding: 8px 16px; margin-top: 10px; cursor: pointer; font-size: 14px;">
+              Написать
+            </button>
           </div>
-        `);
+        `;
+        marker.bindPopup(popupContent);
         
         window.realUserMarkers.push(marker);
       });
@@ -521,7 +546,10 @@ async function sendStatus() {
         const data = await response.json();
         if (response.ok && data) {
           console.log('Status saved successfully:', data);
-          loadStatuses();
+          // Задержка для обеспечения сохранения в БД
+          setTimeout(() => {
+            loadStatuses();
+          }, 1000);
         } else {
           console.error('Failed to save status:', data);
         }
