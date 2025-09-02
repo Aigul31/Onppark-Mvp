@@ -9,3 +9,9 @@ window.APP_CONFIG = {
   // Если используем карты:
   // MAPBOX_TOKEN: "<YOUR_TOKEN>"
 };
+
+// Telegram Mini App integration
+if (window.Telegram?.WebApp) {
+  window.Telegram.WebApp.ready();
+  window.Telegram.WebApp.expand();
+}

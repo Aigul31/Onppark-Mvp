@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const { getAllProfiles, createProfile, getAllStatuses, createStatus, updateUserStatus, sendMessage, getMessages } = require('./database.js');
-const { ObjectStorageService, ObjectNotFoundError } = require('./objectStorage.js');
+const { SupabaseStorageService, ObjectNotFoundError } = require('./supabaseStorage.js');
 
 const port = process.env.PORT || 5000;
 
@@ -227,7 +227,7 @@ const server = http.createServer(async (req, res) => {
     // Object Storage для загрузки фото профилей (POST /api/objects/upload)
     if (pathname === '/api/objects/upload' && req.method === 'POST') {
       try {
-        const objectStorageService = new ObjectStorageService();
+        const objectStorageService = new SupabaseStorageService();
         const uploadURL = await objectStorageService.getObjectEntityUploadURL();
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ uploadURL }));
