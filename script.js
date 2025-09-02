@@ -482,29 +482,19 @@ function initializeMap() {
 // Load statuses from API and display real users on map  
 async function loadStatuses() {
   try {
-    // Получаем статусы и профили из API (где фактически сохраняются данные)
-    const [statusResponse, profilesResponse] = await Promise.all([
-      fetch(`${window.APP_CONFIG.API_BASE}/api/statuses`),
-      fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`)
-    ]);
+    // Получаем активные статусы из обновленного API (уже с профилями)
+    const statusResponse = await fetch(`${window.APP_CONFIG.API_BASE}/api/statuses?active=true&format=items`);
     
-    if (statusResponse.ok && profilesResponse.ok) {
-      const statuses = await statusResponse.json();
-      const profiles = await profilesResponse.json();
+    if (statusResponse.ok) {
+      const data = await statusResponse.json();
+      const statuses = data.items || data; // поддерживаем оба формата
       
-      console.log('=== ОТЛАДКА ЗАГРУЗКИ РЕАЛЬНЫХ ПОЛЬЗОВАТЕЛЕЙ ===');
+      console.log('=== ЗАГРУЗКА АКТИВНЫХ СТАТУСОВ ===');
       console.log('Загружено статусов:', statuses.length, statuses.slice(0, 3));
-      console.log('Загружено профилей:', profiles.length, profiles);
       
       // Показываем счетчик статусов пользователю
       const statusCount = document.getElementById('status-counter') || createStatusCounter();
       statusCount.textContent = `${statuses.length} статусов на карте`;
-      
-      // Создаем карту профилей для быстрого поиска
-      const profileMap = {};
-      profiles.forEach(profile => {
-        profileMap[profile.user_id] = profile;
-      });
       
       // Очищаем предыдущие маркеры реальных пользователей
       if (window.realUserMarkers) {
@@ -515,8 +505,8 @@ async function loadStatuses() {
       // Получаем текущего пользователя
       const currentProfile = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
       
-      // Добавляем маркеры для каждого статуса
-      console.log('Текущий пользователь:', currentProfile.user_id);
+      // Добавляем маркеры для каждого активного статуса
+      console.log('Текущий пользователь:', currentProfile.user_key);
       statuses.forEach((status, index) => {
         console.log(`Обрабатываем статус ${index}:`, status);
         
@@ -525,23 +515,17 @@ async function loadStatuses() {
         const lng = Number(status.longitude);
         
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-          console.log('Пропускаем - невалидные координаты:', { lat, lng, original: { latitude: status.latitude, longitude: status.longitude } });
+          console.log('Пропускаем - невалидные координаты:', { lat, lng });
           return;
         }
         
-        const profile = profileMap[status.user_id];
-        if (!profile) {
-          console.log('Пропускаем - нет профиля для user_id:', status.user_id);
-          return;
-        }
-        
-        // Пропускаем текущего пользователя
-        if (currentProfile.user_id === status.user_id) {
+        // Пропускаем текущего пользователя (по user_key)
+        if (currentProfile.user_key === status.user_key) {
           console.log('Пропускаем - это текущий пользователь');
           return;
         }
         
-        console.log('Создаем маркер для пользователя:', profile.name || profile.display_name);
+        console.log('Создаем маркер для пользователя:', status.name);
         
         const marker = L.marker([lat, lng], {
           icon: getStatusIconMarker(status.icon)
@@ -550,12 +534,12 @@ async function loadStatuses() {
         // Добавляем попап с информацией о пользователе
         const popupContent = `
           <div style="text-align: center; min-width: 200px;">
-            ${profile.avatar_url ? `<img src="${profile.avatar_url}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">` : ''}
-            <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${profile.name || profile.display_name}</div>
-            <div style="color: #4aa896; margin-bottom: 5px;">${status.message}</div>
-            <div style="font-size: 12px; color: #666;">Возраст: ${profile.age}</div>
-            ${profile.interests ? `<div style="font-size: 12px; color: #666; margin-top: 5px;">Интересы: ${profile.interests}</div>` : ''}
-            <button onclick="startChat('${status.user_id}', '${profile.name || profile.display_name}', '${profile.avatar_url || ''}')" 
+            ${status.avatar_url ? `<img src="${status.avatar_url}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">` : ''}
+            <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${status.name}</div>
+            <div style="color: #4aa896; margin-bottom: 5px;">${status.message || 'Активен в приложении'}</div>
+            ${status.location ? `<div style="font-size: 12px; color: #666;">📍 ${status.location}</div>` : ''}
+            <div style="font-size: 12px; color: #999; margin-top: 5px;">${new Date(status.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+            <button onclick="startChat('${status.user_key}', '${status.name}', '${status.avatar_url || ''}')" 
                     style="background: #4aa896; color: white; border: none; border-radius: 15px; 
                            padding: 8px 16px; margin-top: 10px; cursor: pointer; font-size: 14px;">
               Написать
@@ -1335,44 +1319,34 @@ async function addActiveUsers() {
   
   // Добавляем реальных пользователей если есть
   try {
-    // Получаем статусы с координатами
-    const statusResponse = await fetch(`${window.APP_CONFIG.API_BASE}/api/statuses`);
-    const profilesResponse = await fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`);
+    // Получаем активные статусы (уже с профилями)
+    const statusResponse = await fetch(`${window.APP_CONFIG.API_BASE}/api/statuses?active=true&format=items`);
     
-    if (statusResponse.ok && profilesResponse.ok) {
-      const statuses = await statusResponse.json();
-      const profiles = await profilesResponse.json();
+    if (statusResponse.ok) {
+      const data = await statusResponse.json();
+      const statuses = data.items || data;
       
-      console.log('Loaded statuses:', statuses);
-      console.log('Loaded profiles:', profiles);
+      console.log('Loaded real statuses:', statuses.length);
       
       // Объединяем фейковых и реальных пользователей
       const allUsers = [...mockUsers];
       
-      // Создаем карту профилей для быстрого поиска
-      const profileMap = {};
-      profiles.forEach(profile => {
-        profileMap[profile.user_id] = profile;
-      });
-      
-      // Добавляем реальных пользователей по статусам с координатами
+      // Добавляем реальных пользователей по активным статусам
       if (Array.isArray(statuses)) {
         statuses.forEach(status => {
-          if (status.latitude && status.longitude && status.user_id) {
-            const profile = profileMap[status.user_id];
-            if (profile) {
-              allUsers.push({
-                id: `real-${status.user_id}`,
-                lat: status.latitude,
-                lng: status.longitude,
-                display_name: profile.display_name || profile.name,
-                age: profile.age,
-                status: status.icon || 'coffee',
-                interests: profile.interests ? profile.interests.split(',') : [],
-                avatar_url: profile.avatar_url,
-                telegram: profile.telegram
-              });
-            }
+          if (status.latitude && status.longitude && status.user_key) {
+            allUsers.push({
+              id: `real-${status.user_key}`,
+              lat: Number(status.latitude),
+              lng: Number(status.longitude),
+              display_name: status.name || 'Пользователь',
+              age: 25, // возраст по умолчанию
+              status: status.icon || 'location',
+              interests: [], // интересы пока не передаются
+              avatar_url: status.avatar_url,
+              message: status.message,
+              location: status.location
+            });
           }
         });
       }

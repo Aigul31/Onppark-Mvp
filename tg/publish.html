@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnPark - Опубликовать статус</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.7;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--tg-theme-secondary-bg-color, #e1e1e1);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .form-textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        .icon-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .icon-option {
+            background: var(--tg-theme-secondary-bg-color, #f1f1f1);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-option:hover {
+            transform: scale(1.05);
+        }
+
+        .icon-option.selected {
+            border-color: var(--tg-theme-button-color, #0088cc);
+            background: var(--tg-theme-button-color, #0088cc);
+            color: white;
+        }
+
+        .icon-emoji {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .icon-label {
+            font-size: 12px;
+        }
+
+        .location-info {
+            background: var(--tg-theme-secondary-bg-color, #f1f1f1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .location-text {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #efe;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">📍 Опубликовать статус</div>
+            <div class="subtitle">Поделитесь своим текущим местом</div>
+        </div>
+
+        <div id="error-message" class="error" style="display: none;"></div>
+        <div id="success-message" class="success" style="display: none;"></div>
+
+        <div id="location-info" class="location-info" style="display: none;">
+            <div class="location-text" id="location-text">📍 Получение геолокации...</div>
+        </div>
+
+        <form id="status-form">
+            <div class="form-group">
+                <label class="form-label">Что вы делаете?</label>
+                <textarea class="form-textarea" id="message" placeholder="Пью кофе, гуляю в парке, читаю книгу..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Выберите иконку</label>
+                <div class="icon-selector">
+                    <div class="icon-option" data-icon="coffee">
+                        <span class="icon-emoji">☕</span>
+                        <span class="icon-label">Кофе</span>
+                    </div>
+                    <div class="icon-option" data-icon="walk">
+                        <span class="icon-emoji">🚶</span>
+                        <span class="icon-label">Прогулка</span>
+                    </div>
+                    <div class="icon-option" data-icon="read">
+                        <span class="icon-emoji">📚</span>
+                        <span class="icon-label">Читаю</span>
+                    </div>
+                    <div class="icon-option selected" data-icon="location">
+                        <span class="icon-emoji">📍</span>
+                        <span class="icon-label">Место</span>
+                    </div>
+                    <div class="icon-option" data-icon="food">
+                        <span class="icon-emoji">🍽️</span>
+                        <span class="icon-label">Еда</span>
+                    </div>
+                    <div class="icon-option" data-icon="work">
+                        <span class="icon-emoji">💼</span>
+                        <span class="icon-label">Работа</span>
+                    </div>
+                    <div class="icon-option" data-icon="sport">
+                        <span class="icon-emoji">🏃</span>
+                        <span class="icon-label">Спорт</span>
+                    </div>
+                    <div class="icon-option" data-icon="relax">
+                        <span class="icon-emoji">😌</span>
+                        <span class="icon-label">Отдых</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Место (необязательно)</label>
+                <input type="text" class="form-input" id="location" placeholder="Название места, адрес...">
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="publish-btn">
+                📍 Опубликовать статус
+            </button>
+        </form>
+
+        <div id="loading" class="loading" style="display: none;">
+            Публикация статуса...
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        let selectedIcon = 'location';
+        let currentLocation = null;
+
+        // Инициализация Telegram WebApp
+        tg.ready();
+        tg.expand();
+
+        // Устанавливаем цвета темы
+        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
+        document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#0088cc');
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f1f1f1');
+
+        // Обработчик выбора иконок
+        document.querySelectorAll('.icon-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.icon-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedIcon = option.dataset.icon;
+            });
+        });
+
+        // Получение геолокации
+        function getCurrentLocation() {
+            if (!navigator.geolocation) {
+                showError('Геолокация не поддерживается в вашем браузере');
+                return;
+            }
+
+            document.getElementById('location-info').style.display = 'block';
+            document.getElementById('location-text').textContent = '📍 Получение геолокации...';
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    currentLocation = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+                    document.getElementById('location-text').textContent = 
+                        `📍 Геолокация получена (±${Math.round(position.coords.accuracy)}м)`;
+                },
+                (error) => {
+                    let errorMessage = 'Не удалось получить геолокацию';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Доступ к геолокации запрещен';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Геолокация недоступна';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Превышено время ожидания геолокации';
+                            break;
+                    }
+                    showError(errorMessage);
+                    document.getElementById('location-info').style.display = 'none';
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 300000 // 5 минут
+                }
+            );
+        }
+
+        // Обработчик отправки формы
+        document.getElementById('status-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentLocation) {
+                showError('Необходимо получить геолокацию перед публикацией');
+                return;
+            }
+
+            const message = document.getElementById('message').value.trim();
+            const location = document.getElementById('location').value.trim();
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('publish-btn').disabled = true;
+
+            try {
+                const response = await fetch('/api/tg/status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        initData: tg.initData,
+                        latitude: currentLocation.latitude,
+                        longitude: currentLocation.longitude,
+                        message: message,
+                        icon: selectedIcon,
+                        location: location
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Ошибка публикации');
+                }
+
+                showSuccess('✅ Статус успешно опубликован!');
+                
+                // Очищаем форму
+                document.getElementById('message').value = '';
+                document.getElementById('location').value = '';
+                
+                // Возвращаемся в меню через 2 секунды
+                setTimeout(() => {
+                    window.location.href = '/tg/index.html';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error publishing status:', error);
+                showError(`Ошибка: ${error.message}`);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('publish-btn').disabled = false;
+            }
+        });
+
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successEl = document.getElementById('success-message');
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+        }
+
+        // Инициализация при загрузке
+        if (tg.initDataUnsafe?.user) {
+            getCurrentLocation();
+        } else {
+            showError('Приложение должно запускаться из Telegram');
+        }
+    </script>
+</body>
+</html>

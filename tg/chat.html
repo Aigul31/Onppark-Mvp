@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnPark - Чат</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            line-height: 1.5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: var(--tg-theme-secondary-bg-color, #f1f1f1);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--tg-theme-secondary-bg-color, #e1e1e1);
+            display: flex;
+            align-items: center;
+        }
+
+        .header-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--tg-theme-button-color, #0088cc);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            margin-right: 15px;
+        }
+
+        .header-info {
+            flex: 1;
+        }
+
+        .header-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .header-status {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .message.own {
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            word-wrap: break-word;
+        }
+
+        .message.own .message-content {
+            background: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border-bottom-right-radius: 5px;
+        }
+
+        .message:not(.own) .message-content {
+            background: var(--tg-theme-secondary-bg-color, #f1f1f1);
+            color: var(--tg-theme-text-color, #000000);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-time {
+            font-size: 12px;
+            opacity: 0.5;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .message:not(.own) .message-time {
+            text-align: left;
+        }
+
+        .chat-input {
+            border-top: 1px solid var(--tg-theme-secondary-bg-color, #e1e1e1);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--tg-theme-bg-color, #ffffff);
+        }
+
+        .input-field {
+            flex: 1;
+            border: 1px solid var(--tg-theme-secondary-bg-color, #e1e1e1);
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 16px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            outline: none;
+        }
+
+        .send-button {
+            background: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: opacity 0.2s;
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.6;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-subtitle {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.7;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 8px;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            padding: 10px 15px;
+            opacity: 0.7;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-header">
+        <div class="header-avatar" id="header-avatar">👤</div>
+        <div class="header-info">
+            <div class="header-name" id="header-name">Загрузка...</div>
+            <div class="header-status" id="header-status">подключение...</div>
+        </div>
+    </div>
+
+    <div class="messages-container" id="messages-container">
+        <div id="loading" class="loading">
+            Загрузка сообщений...
+        </div>
+
+        <div id="error-message" class="error" style="display: none;"></div>
+
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <div class="empty-icon">💬</div>
+            <div class="empty-title">Начните общение!</div>
+            <div class="empty-subtitle">
+                Отправьте первое сообщение<br>
+                чтобы начать диалог
+            </div>
+        </div>
+    </div>
+
+    <div class="typing-indicator" id="typing-indicator">
+        <span>Собеседник печатает...</span>
+    </div>
+
+    <div class="chat-input">
+        <input type="text" class="input-field" id="message-input" placeholder="Написать сообщение..." maxlength="1000">
+        <button class="send-button" id="send-button">📤</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        let roomId = null;
+        let currentUser = null;
+        let messages = [];
+        let isLoading = false;
+        let updateInterval = null;
+
+        // Инициализация Telegram WebApp
+        tg.ready();
+        tg.expand();
+
+        // Устанавливаем цвета темы
+        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
+        document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#0088cc');
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f1f1f1');
+
+        // Получаем room ID из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        roomId = urlParams.get('room');
+
+        if (!roomId) {
+            showError('Не указан ID комнаты');
+        }
+
+        // Обработчик отправки сообщений
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        async function loadMessages() {
+            if (isLoading || !roomId) return;
+
+            try {
+                isLoading = true;
+                
+                const response = await fetch(`/api/tg/chat/room/${roomId}?initData=${encodeURIComponent(tg.initData)}`);
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Ошибка загрузки сообщений');
+                }
+
+                const data = await response.json();
+                messages = data.messages || [];
+
+                renderMessages();
+                
+                // Обновляем статус
+                document.getElementById('header-status').textContent = 'в сети';
+                
+                // Первая загрузка - скрываем loading
+                if (document.getElementById('loading').style.display !== 'none') {
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    if (messages.length === 0) {
+                        document.getElementById('empty-state').style.display = 'block';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                showError(`Ошибка: ${error.message}`);
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('messages-container');
+            
+            // Удаляем старые сообщения, но оставляем служебные элементы
+            const messageElements = container.querySelectorAll('.message');
+            messageElements.forEach(el => el.remove());
+            
+            // Скрываем empty state если есть сообщения
+            if (messages.length > 0) {
+                document.getElementById('empty-state').style.display = 'none';
+            }
+
+            messages.forEach(message => {
+                const messageEl = document.createElement('div');
+                messageEl.className = `message ${message.is_own ? 'own' : ''}`;
+                
+                messageEl.innerHTML = `
+                    <div class="message-content">
+                        ${escapeHtml(message.text)}
+                        <div class="message-time">${formatTime(message.created_at)}</div>
+                    </div>
+                `;
+                
+                container.appendChild(messageEl);
+            });
+
+            // Прокрутка к последнему сообщению
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            
+            if (!text || isLoading) return;
+
+            const sendButton = document.getElementById('send-button');
+            
+            try {
+                input.disabled = true;
+                sendButton.disabled = true;
+                
+                const response = await fetch(`/api/tg/chat/room/${roomId}/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        initData: tg.initData,
+                        text: text
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Ошибка отправки');
+                }
+
+                // Очищаем поле ввода
+                input.value = '';
+                
+                // Обновляем сообщения
+                await loadMessages();
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showError(`Ошибка отправки: ${error.message}`);
+            } finally {
+                input.disabled = false;
+                sendButton.disabled = false;
+                input.focus();
+            }
+        }
+
+        function formatTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString('ru-RU', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Инициализация при загрузке
+        if (tg.initDataUnsafe?.user && roomId) {
+            // Устанавливаем базовую информацию о пользователе
+            const user = tg.initDataUnsafe.user;
+            currentUser = {
+                name: [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username,
+                avatar_url: user.photo_url
+            };
+
+            // Загружаем сообщения
+            loadMessages();
+
+            // Настраиваем автообновление каждые 3 секунды
+            updateInterval = setInterval(loadMessages, 3000);
+            
+        } else {
+            showError('Приложение должно запускаться из Telegram с указанием комнаты');
+        }
+
+        // Очистка интервала при закрытии
+        window.addEventListener('beforeunload', () => {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        });
+    </script>
+</body>
+</html>

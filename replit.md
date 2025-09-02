@@ -1,8 +1,8 @@
-# OnPark
+# OnPark MVP
 
 ## Overview
 
-OnPark is a social location-based mobile web application that allows users to share their current status and location with others. The app enables users to create profiles, post location-based statuses (like "having coffee", "walking", "traveling"), and view other users' activities on an interactive map. The application is designed as a mobile-first Progressive Web App (PWA) with Telegram Mini App integration capabilities.
+OnPark is a social location-based application that allows users to share their current status and location with others. The app enables users to create profiles, post location-based statuses (like "having coffee", "walking", "traveling"), and view other users' activities on an interactive map. The application is now fully migrated to Vercel + Supabase architecture with comprehensive Telegram Mini App integration.
 
 ## User Preferences
 
@@ -11,28 +11,34 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
-- **Technology Stack**: Vanilla JavaScript, HTML5, CSS3 with mobile-first responsive design
-- **UI Framework**: Custom CSS with mobile container simulation for consistent mobile experience
+- **Web Interface**: Vanilla JavaScript, HTML5, CSS3 with mobile-first responsive design
+- **Telegram Mini App**: Complete PWA with native Telegram WebApp API integration
 - **Map Integration**: Leaflet.js for interactive mapping functionality
+- **UI Components**: Custom CSS with mobile container simulation for consistent experience
 - **Screen Management**: Single Page Application (SPA) with JavaScript-based screen transitions
 - **Multi-language Support**: Built-in internationalization with Russian and English language switching
-- **Telegram Integration**: Native Telegram WebApp API integration for seamless in-app experience
+- **Real-time Updates**: Active status loading with 24-hour expiration and location filtering
 
 ### Backend Architecture
 - **Deployment Platform**: Vercel serverless functions for production deployment
 - **API Structure**: RESTful API endpoints using Vercel's `/api` directory structure
 - **Development Server**: Node.js HTTP server for local development (server.js)
-- **Authentication**: Supabase Auth integration with both anonymous and authenticated access patterns
-- **File Upload**: Multipart form handling using Busboy library for avatar and media uploads
+- **Authentication**: Dual authentication system:
+  - Telegram initData verification for Mini App users
+  - Supabase Auth for web interface users
+- **Chat System**: Real-time messaging with room-based architecture and Telegram bot notifications
+- **Performance**: P50 response time <150ms for GET /api/statuses with active status filtering
 
 ### Data Storage Solutions
-- **Primary Database**: Supabase (PostgreSQL) with the following core tables:
-  - `profiles`: User profile information including display_name, age, interests, avatar
-  - `statuses`: Location-based user statuses with coordinates, icons, and messages  
-  - `messages`: Direct messaging between users with thread-based organization
+- **Primary Database**: Supabase (PostgreSQL) with comprehensive schema:
+  - `profiles`: User profiles with both regular and Telegram user support (user_key, telegram_id)
+  - `statuses`: Location-based statuses with 24-hour expiration and user_key indexing
+  - `chat_rooms`: Private messaging rooms between users  
+  - `chat_messages`: Message storage with sender tracking and timestamps
+  - `sessions`: Session storage for authentication
 - **File Storage**: Supabase Storage for avatar images and user-uploaded content
-- **Row Level Security (RLS)**: Implemented for data access control and user privacy
-- **Caching Strategy**: In-memory caching for frequently accessed user statuses and profiles
+- **Row Level Security (RLS)**: Comprehensive policies for data isolation and privacy
+- **Performance Optimization**: Active status filtering, geographical bounding box queries, and response time monitoring
 
 ### Authentication and Authorization
 - **Authentication Provider**: Supabase Auth with email/password and social login options
