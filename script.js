@@ -43,11 +43,8 @@ function showMap() {
     // Сначала загружаем других пользователей
     loadStatuses();
     
-    // Автоматически отправляем статус при открытии карты
-    const profile = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
-    if (profile.user_id) {
-      sendStatus();
-    }
+    // НЕ отправляем статус автоматически - пользователь должен выбрать место на карте
+    console.log('Карта инициализирована. Пользователь может выбрать статус и место.');
   }, 100);
 }
 
@@ -520,47 +517,54 @@ async function loadProfiles() {
   }
 }
 
-// Send status to API
-async function sendStatus() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(async pos => {
-      try {
-        // Получаем user_id из профиля или генерируем уникальный
-        const profileData = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
-        const userId = profileData.user_id || `user_${Date.now()}`;
-        
-        const status = {
-          user_id: userId,
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          icon: currentUserStatus,
-          message: getStatusMessage(currentUserStatus)
-        };
-        
-        console.log('Sending status:', status);
-        const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(status)
-        });
-        
-        console.log('Status response status:', response.status);
-        const data = await response.json();
-        if (response.ok && data) {
-          console.log('Status saved successfully:', data);
-          // Задержка для обеспечения сохранения в БД
-          setTimeout(() => {
-            loadStatuses();
-          }, 2000);
-        } else {
-          console.error('Failed to save status:', data);
-        }
-      } catch (error) {
-        console.error('Error sending status:', error);
-        alert('Ошибка при сохранении статуса');
-      }
+// НОВАЯ функция: сохранение статуса с конкретными координатами после клика на карту
+async function saveStatusToDatabase(latitude, longitude, statusIcon) {
+  try {
+    // Получаем user_id из профиля
+    const profileData = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
+    const userId = profileData.user_id;
+    
+    if (!userId) {
+      alert('Сначала создайте профиль');
+      return;
+    }
+    
+    const status = {
+      user_id: userId,
+      latitude: latitude,
+      longitude: longitude,
+      icon: statusIcon,
+      message: getStatusMessage(statusIcon)
+    };
+    
+    console.log('Сохраняем статус на выбранной локации:', status);
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(status)
     });
+    
+    console.log('Status response status:', response.status);
+    const data = await response.json();
+    if (response.ok && data) {
+      console.log('Status saved successfully:', data);
+      // Обновляем карту с новыми статусами
+      setTimeout(() => {
+        loadStatuses();
+      }, 1000);
+    } else {
+      console.error('Failed to save status:', data);
+      alert('Ошибка при сохранении статуса');
+    }
+  } catch (error) {
+    console.error('Error saving status:', error);
+    alert('Ошибка при сохранении статуса');
   }
+}
+
+// СТАРАЯ функция: автоматическое получение геолокации (НЕ используется больше)
+async function sendStatus() {
+  console.log('sendStatus() вызвана, но теперь статус сохраняется только при клике на карту');
 }
 
 let currentUserStatus = 'coffee'; // Default user status
@@ -587,10 +591,10 @@ async function updateStatus(newStatusType) {
     return;
   }
   
-  // Просто создаем новый статус вместо обновления
+  // Только меняем выбранный статус, НЕ сохраняем автоматически
   currentUserStatus = newStatusType;
   updateStatusButtons();
-  await sendStatus(); // Создаем новый статус с новой геолокацией
+  console.log('Статус изменен на:', newStatusType, '. Теперь кликните на карту для сохранения.');
 }
 
 // Обновление внешнего вида кнопок статуса
@@ -791,6 +795,9 @@ function placeUserOnMap(latlng, status) {
     .addTo(map)
     .bindPopup(t('you-here'))
     .openPopup();
+    
+  // ВАЖНО: Сохраняем статус в базу данных только после клика на карту
+  saveStatusToDatabase(latlng.lat, latlng.lng, status);
     
   // Show success message
   showSuccessPlacement(status);
