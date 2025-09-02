@@ -114,8 +114,8 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Отправка статуса (POST /api/status) - создание нового статуса
-    if (pathname === '/api/status' && req.method === 'POST') {
+    // Отправка статуса (POST /api/statuses) - создание нового статуса
+    if (pathname === '/api/statuses' && req.method === 'POST') {
       let body = '';
       req.on('data', chunk => {
         body += chunk.toString();
@@ -143,8 +143,8 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     
-    // Обновление статуса (PUT /api/status) - изменение существующего статуса
-    if (pathname === '/api/status' && req.method === 'PUT') {
+    // Обновление статуса (PUT /api/statuses) - изменение существующего статуса  
+    if (pathname === '/api/statuses' && req.method === 'PUT') {
       let body = '';
       req.on('data', chunk => {
         body += chunk.toString();
