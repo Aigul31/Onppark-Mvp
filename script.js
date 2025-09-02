@@ -617,69 +617,46 @@ function startStatusPlacement() {
 function startChat(userId, userName, userAvatar) {
   console.log('Начинаем чат с пользователем:', userName, 'ID:', userId);
   
-  // Проверяем, разместил ли текущий пользователь свой статус
-  const currentProfile = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
-  if (!currentProfile.user_id) {
-    alert('Сначала завершите регистрацию!');
-    return;
+  // Переходим на страницу сообщений
+  showMessages();
+  
+  // Добавляем профиль выбранного пользователя в список сообщений
+  addUserToMessagesList(userId, userName, userAvatar);
+  
+  console.log('Переход на страницу сообщений с пользователем:', userName);
+}
+
+// Функция для показа чата с выбранным пользователем
+function showChat(userId, userName) {
+  console.log('Переход в чат с пользователем:', userName, 'ID:', userId);
+  
+  // Устанавливаем данные текущего чата
+  window.currentChatUser = {
+    id: userId,
+    name: userName
+  };
+  
+  // Обновляем заголовок чата
+  const chatUserNameEl = document.getElementById('chatUserName');
+  const chatAvatarEl = document.getElementById('chatAvatar');
+  
+  if (chatUserNameEl) {
+    chatUserNameEl.textContent = userName;
   }
   
-  // Проверяем есть ли статус у текущего пользователя
-  checkUserHasStatus(currentProfile.user_id).then(hasStatus => {
-    if (!hasStatus) {
-      // Показываем компактное уведомление о размещении статуса
-      const statusAlert = document.createElement('div');
-      statusAlert.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-        z-index: 10000;
-        text-align: center;
-        max-width: 280px;
-      `;
-      statusAlert.innerHTML = `
-        <div style="font-size: 24px; margin-bottom: 8px;">🎯</div>
-        <h4 style="margin: 0 0 8px 0; color: #4aa896; font-size: 16px;">Разместите статус</h4>
-        <p style="margin: 0 0 15px 0; color: #666; font-size: 13px;">
-          Для общения нужен статус на карте
-        </p>
-        <button onclick="this.parentElement.remove(); startStatusPlacement()" style="
-          background: #4aa896;
-          color: white;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 15px;
-          cursor: pointer;
-          font-size: 12px;
-          margin-right: 8px;
-        ">Разместить</button>
-        <button onclick="this.parentElement.remove()" style="
-          background: #ddd;
-          color: #666;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 15px;
-          cursor: pointer;
-          font-size: 12px;
-        ">Отмена</button>
-      `;
-      document.body.appendChild(statusAlert);
-      return;
+  // Найдем данные пользователя для аватара
+  if (window.allUsersData) {
+    const userData = window.allUsersData.find(u => u.user_id === userId || u.id === userId);
+    if (userData && chatAvatarEl) {
+      chatAvatarEl.src = userData.avatar_url || 'https://via.placeholder.com/40';
     }
-    
-    // Пользователь разместил статус - переходим на страницу сообщений
-    showMessages();
-    
-    // Добавляем профиль выбранного пользователя в список сообщений
-    addUserToMessagesList(userId, userName, userAvatar);
-    
-    console.log('Переход на страницу сообщений с пользователем:', userName);
-  });
+  }
+  
+  // Загружаем сообщения для этого чата
+  loadChatMessages();
+  
+  // Показываем экран чата
+  showScreen('chatScreen');
 }
 
 // Добавить пользователя в список сообщений
