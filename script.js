@@ -301,6 +301,18 @@ async function initializeSupabase() {
     if (window.supabase && typeof window.supabase.createClient === 'function') {
       supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       console.log('Supabase initialized with credentials');
+      
+      // Обработка magic link после входа
+      supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          console.log('Пользователь вошел:', session.user.email);
+          alert('Вход выполнен успешно! Теперь вы можете размещать статусы.');
+        }
+        if (event === 'SIGNED_OUT') {
+          console.log('Пользователь вышел');
+        }
+      });
+      
       return true;
     } else {
       console.log('Supabase library not loaded, using mock data');
@@ -392,18 +404,23 @@ function initializeMap() {
   }, 2000);
 }
 
-// Load statuses from API and display real users on map
+// Load statuses from Supabase and display real users on map
 async function loadStatuses() {
   try {
-    // Получаем статусы и профили из API
-    const [statusResponse, profilesResponse] = await Promise.all([
-      fetch(`${window.APP_CONFIG.API_BASE}/api/status`),
-      fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`)
+    if (!supabase) {
+      console.log('Supabase не инициализирован, используем заглушки');
+      return;
+    }
+    
+    // Получаем статусы и профили напрямую из Supabase
+    const [statusResult, profilesResult] = await Promise.all([
+      supabase.from('statuses').select('*'),
+      supabase.from('profiles').select('*')
     ]);
     
-    if (statusResponse.ok && profilesResponse.ok) {
-      const statuses = await statusResponse.json();
-      const profiles = await profilesResponse.json();
+    if (statusResult.data && profilesResult.data) {
+      const statuses = statusResult.data;
+      const profiles = profilesResult.data;
       
       console.log('=== ОТЛАДКА ЗАГРУЗКИ РЕАЛЬНЫХ ПОЛЬЗОВАТЕЛЕЙ ===');
       console.log('Загружено статусов:', statuses.length, statuses);
@@ -449,7 +466,7 @@ async function loadStatuses() {
         console.log('Создаем маркер для пользователя:', profile.display_name);
         
         const marker = L.marker([status.latitude, status.longitude], {
-          icon: getStatusIcon(status.icon)
+          icon: getStatusIconMarker(status.icon)
         }).addTo(map);
         
         // Добавляем попап с информацией о пользователе
@@ -479,8 +496,8 @@ async function loadStatuses() {
   }
 }
 
-// Функция для создания иконок статусов
-function getStatusIcon(statusType) {
+// Функция для создания иконок статусов для маркеров
+function getStatusIconMarker(statusType) {
   const iconHtml = {
     'coffee': '☕',
     'walk': '🚶‍♀️',
@@ -517,17 +534,19 @@ async function loadProfiles() {
   }
 }
 
-// НОВАЯ функция: сохранение статуса с конкретными координатами после клика на карту
+// НОВАЯ функция: сохранение статуса с аутентификацией Supabase
 async function saveStatusToDatabase(latitude, longitude, statusIcon) {
   try {
-    // Получаем user_id из профиля
-    const profileData = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
-    const userId = profileData.user_id;
-    
-    if (!userId) {
-      alert('Сначала создайте профиль');
+    // Проверяем аутентификацию Supabase
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session) {
+      // Показываем модалку входа
+      showAuthModal();
       return;
     }
+    
+    // Используем реальный user_id из сессии Supabase
+    const userId = session.session.user.id;
     
     const status = {
       user_id: userId,
@@ -537,28 +556,134 @@ async function saveStatusToDatabase(latitude, longitude, statusIcon) {
       message: getStatusMessage(statusIcon)
     };
     
-    console.log('Сохраняем статус на выбранной локации:', status);
-    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(status)
-    });
+    console.log('Сохраняем статус для аутентифицированного пользователя:', status);
     
-    console.log('Status response status:', response.status);
-    const data = await response.json();
-    if (response.ok && data) {
-      console.log('Status saved successfully:', data);
-      // Обновляем карту с новыми статусами
-      setTimeout(() => {
-        loadStatuses();
-      }, 1000);
-    } else {
-      console.error('Failed to save status:', data);
+    // Сохраняем напрямую через Supabase
+    const { data, error } = await supabase
+      .from('statuses')
+      .insert(status)
+      .select();
+    
+    if (error) {
+      console.error('Supabase error:', error);
       alert('Ошибка при сохранении статуса');
+      return;
     }
+    
+    console.log('Status saved successfully via Supabase:', data);
+    // Обновляем карту с новыми статусами
+    setTimeout(() => {
+      loadStatuses();
+    }, 1000);
+    
   } catch (error) {
     console.error('Error saving status:', error);
     alert('Ошибка при сохранении статуса');
+  }
+}
+
+// Модалка для входа/регистрации
+function showAuthModal() {
+  const modal = document.createElement('div');
+  modal.className = 'auth-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  `;
+  
+  modal.innerHTML = `
+    <div style="
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    ">
+      <h2 style="margin: 0 0 20px 0; color: #333;">Вход требуется</h2>
+      <p style="margin: 0 0 25px 0; color: #666;">
+        Для размещения статуса на карте необходимо войти в аккаунт
+      </p>
+      
+      <input type="email" id="authEmail" placeholder="Ваш email" style="
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        font-size: 16px;
+        box-sizing: border-box;
+      ">
+      
+      <div style="display: flex; gap: 10px;">
+        <button onclick="sendMagicLink()" style="
+          flex: 1;
+          padding: 12px;
+          background: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-size: 16px;
+          cursor: pointer;
+        ">Отправить ссылку</button>
+        
+        <button onclick="closeAuthModal()" style="
+          flex: 1;
+          padding: 12px;
+          background: #ff5757;
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-size: 16px;
+          cursor: pointer;
+        ">Отмена</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+function closeAuthModal() {
+  const modal = document.querySelector('.auth-modal');
+  if (modal) {
+    document.body.removeChild(modal);
+  }
+}
+
+async function sendMagicLink() {
+  const email = document.getElementById('authEmail').value;
+  if (!email) {
+    alert('Введите email');
+    return;
+  }
+  
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        emailRedirectTo: window.location.href
+      }
+    });
+    
+    if (error) {
+      alert('Ошибка отправки: ' + error.message);
+      return;
+    }
+    
+    alert('Ссылка для входа отправлена на ' + email);
+    closeAuthModal();
+  } catch (error) {
+    console.error('Auth error:', error);
+    alert('Ошибка аутентификации');
   }
 }
 
