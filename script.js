@@ -163,6 +163,10 @@ document.addEventListener('DOMContentLoaded', function() {
       
       setTimeout(() => {
         showPhoto();
+        // Показываем обязательную подсказку о статусе после регистрации
+        setTimeout(() => {
+          showMandatoryStatusTutorial();
+        }, 1000);
       }, 2000);
     });
   }
@@ -525,6 +529,180 @@ function createStatusCounter() {
   return counter;
 }
 
+// Обязательная подсказка о статусе после регистрации
+function showMandatoryStatusTutorial() {
+  const tutorialOverlay = document.createElement('div');
+  tutorialOverlay.id = 'status-tutorial-overlay';
+  tutorialOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  tutorialOverlay.innerHTML = `
+    <div style="
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 400px;
+      margin: 20px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    ">
+      <div style="font-size: 48px; margin-bottom: 20px;">🎯</div>
+      <h2 style="margin: 0 0 15px 0; color: #4aa896;">Разместите свой статус!</h2>
+      <p style="margin: 0 0 20px 0; color: #666; line-height: 1.5;">
+        Чтобы <strong>общаться с другими пользователями</strong>, вам нужно разместить свой статус на карте. 
+        Выберите что вас интересует: кофе ☕, прогулка 🚶‍♀️ или путешествие ✈️
+      </p>
+      <p style="margin: 0 0 25px 0; color: #999; font-size: 14px;">
+        Это обязательное условие для активации функции сообщений
+      </p>
+      <button onclick="startStatusPlacement()" style="
+        background: #4aa896;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        width: 100%;
+      ">Разместить статус сейчас</button>
+    </div>
+  `;
+  
+  document.body.appendChild(tutorialOverlay);
+}
+
+// Начать размещение статуса (из обязательной подсказки)
+function startStatusPlacement() {
+  const tutorial = document.getElementById('status-tutorial-overlay');
+  if (tutorial) {
+    document.body.removeChild(tutorial);
+  }
+  
+  // Подсвечиваем фильтры статусов
+  const filterIcons = document.querySelectorAll('.filter-icon');
+  filterIcons.forEach(icon => {
+    icon.style.animation = 'pulse 1.5s infinite';
+    icon.style.border = '3px solid #ff6b6b';
+  });
+  
+  // Показываем подсказку где кликнуть
+  const hint = document.createElement('div');
+  hint.id = 'status-placement-hint';
+  hint.style.cssText = `
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4aa896;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 25px;
+    z-index: 5000;
+    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    animation: bounce 2s infinite;
+  `;
+  hint.textContent = '👆 Выберите ваш интерес (кофе, прогулка или путешествие)';
+  document.body.appendChild(hint);
+}
+
+// Функция для перехода на страницу сообщений по кнопке "Написать"
+function startChat(userId, userName) {
+  console.log('Начинаем чат с пользователем:', userName, 'ID:', userId);
+  
+  // Проверяем, разместил ли текущий пользователь свой статус
+  const currentProfile = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
+  if (!currentProfile.user_id) {
+    alert('Сначала завершите регистрацию!');
+    return;
+  }
+  
+  // Проверяем есть ли статус у текущего пользователя
+  checkUserHasStatus(currentProfile.user_id).then(hasStatus => {
+    if (!hasStatus) {
+      // Показываем обязательную подсказку о размещении статуса
+      const statusAlert = document.createElement('div');
+      statusAlert.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        z-index: 10000;
+        text-align: center;
+        max-width: 350px;
+      `;
+      statusAlert.innerHTML = `
+        <div style="font-size: 32px; margin-bottom: 15px;">⚠️</div>
+        <h3 style="margin: 0 0 10px 0; color: #4aa896;">Сначала разместите статус!</h3>
+        <p style="margin: 0 0 20px 0; color: #666;">
+          Чтобы писать другим пользователям, вам нужно разместить свой статус на карте
+        </p>
+        <button onclick="this.parentElement.remove(); startStatusPlacement()" style="
+          background: #4aa896;
+          color: white;
+          border: none;
+          padding: 12px 20px;
+          border-radius: 20px;
+          cursor: pointer;
+          font-size: 14px;
+          margin-right: 10px;
+        ">Разместить статус</button>
+        <button onclick="this.parentElement.remove()" style="
+          background: #ccc;
+          color: #666;
+          border: none;
+          padding: 12px 20px;
+          border-radius: 20px;
+          cursor: pointer;
+          font-size: 14px;
+        ">Отмена</button>
+      `;
+      document.body.appendChild(statusAlert);
+      return;
+    }
+    
+    // Пользователь разместил статус - переходим на страницу сообщений
+    showMessages();
+    
+    // Устанавливаем данные чата с выбранным пользователем
+    window.currentChatUser = {
+      id: userId,
+      name: userName
+    };
+    
+    console.log('Переход на страницу сообщений с пользователем:', userName);
+  });
+}
+
+// Проверка есть ли у пользователя статус
+async function checkUserHasStatus(userId) {
+  try {
+    const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/statuses`);
+    const statuses = await response.json();
+    
+    // Проверяем есть ли статус для этого пользователя
+    return statuses.some(status => status.user_id === userId);
+  } catch (error) {
+    console.error('Ошибка проверки статуса:', error);
+    return false;
+  }
+}
+
 // Функция для создания иконок статусов для маркеров
 function getStatusIconMarker(statusType) {
   const iconHtml = {
@@ -589,6 +767,20 @@ async function saveStatusToDatabase(latitude, longitude, statusIcon) {
     await saveViaAPI(status);
     
     console.log('Status saved successfully!');
+    
+    // Убираем подсказку о размещении если она есть
+    const hint = document.getElementById('status-placement-hint');
+    if (hint) {
+      document.body.removeChild(hint);
+    }
+    
+    // Убираем анимацию с фильтров
+    const filterIcons = document.querySelectorAll('.filter-icon');
+    filterIcons.forEach(icon => {
+      icon.style.animation = '';
+      icon.style.border = '';
+    });
+    
     // Обновляем карту с новыми статусами быстро
     setTimeout(() => {
       loadStatuses();
