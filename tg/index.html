@@ -1,242 +1,100 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OnPark - Главное меню</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            line-height: 1.5;
-        }
-
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: var(--tg-theme-button-color, #0088cc);
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            font-size: 16px;
-            opacity: 0.7;
-        }
-
-        .menu-item {
-            background: var(--tg-theme-secondary-bg-color, #f1f1f1);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            transition: transform 0.2s, opacity 0.2s;
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .menu-item:hover {
-            transform: translateY(-2px);
-            opacity: 0.9;
-        }
-
-        .menu-item:active {
-            transform: translateY(0);
-        }
-
-        .menu-icon {
-            font-size: 24px;
-            margin-right: 15px;
-            width: 40px;
-            text-align: center;
-        }
-
-        .menu-content {
-            flex: 1;
-        }
-
-        .menu-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .menu-desc {
-            font-size: 14px;
-            opacity: 0.7;
-        }
-
-        .profile-info {
-            background: var(--tg-theme-secondary-bg-color, #f1f1f1);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-        }
-
-        .profile-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            background: var(--tg-theme-button-color, #0088cc);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            margin-right: 15px;
-        }
-
-        .profile-name {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            opacity: 0.7;
-        }
-
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>onPark — Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, Roboto, Arial, sans-serif; margin: 0; padding: 16px; }
+    .card { border-radius: 16px; padding: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.08); margin-bottom: 16px; }
+    label { display:block; margin: 8px 0 4px; font-size: 14px; opacity: .8; }
+    input, select, textarea, button { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; }
+    button { border: none; font-weight: 600; }
+    .primary { background: #10b981; color: white; }
+    .muted { font-size: 12px; opacity: .7; margin-top: 8px; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🗺️ OnPark</div>
-            <div class="subtitle">Социальная карта для встреч</div>
-        </div>
+  <div class="card">
+    <h2>onPark — люди рядом</h2>
+    <div id="hello" class="muted">Инициализация…</div>
+  </div>
 
-        <div id="profile-info" class="profile-info" style="display: none;">
-            <div class="profile-avatar" id="profile-avatar">👤</div>
-            <div>
-                <div class="profile-name" id="profile-name">Загрузка...</div>
-            </div>
-        </div>
+  <div class="card">
+    <label>Статус</label>
+    <select id="icon">
+      <option value="coffee">Кофе</option>
+      <option value="walk">Прогулка</option>
+      <option value="travel">Попутчик</option>
+    </select>
 
-        <div id="error-message" class="error" style="display: none;"></div>
+    <label>Сообщение (необязательно)</label>
+    <textarea id="message" rows="2" placeholder="Где вы и что предлагаете?"></textarea>
 
-        <div id="loading" class="loading">Инициализация...</div>
+    <label>Локация</label>
+    <input id="location" placeholder="Напр.: Almaty Park" />
 
-        <div id="menu" style="display: none;">
-            <a href="/tg/publish.html" class="menu-item">
-                <div class="menu-icon">📍</div>
-                <div class="menu-content">
-                    <div class="menu-title">Опубликовать статус</div>
-                    <div class="menu-desc">Поделиться своим местоположением</div>
-                </div>
-            </a>
+    <button id="publish" class="primary" style="margin-top:12px;">Опубликовать статус</button>
+    <div id="out" class="muted"></div>
+  </div>
 
-            <a href="/tg/chats.html" class="menu-item">
-                <div class="menu-icon">💬</div>
-                <div class="menu-content">
-                    <div class="menu-title">Мои чаты</div>
-                    <div class="menu-desc">Активные разговоры</div>
-                </div>
-            </a>
+  <script type="module">
+    // 1) Telegram WebApp init
+    const tg = window.Telegram?.WebApp;
+    tg?.ready();
+    tg?.expand(); // развернуть на весь экран
 
-            <a href="/" class="menu-item" target="_blank">
-                <div class="menu-icon">🗺️</div>
-                <div class="menu-content">
-                    <div class="menu-title">Карта</div>
-                    <div class="menu-desc">Посмотреть карту в браузере</div>
-                </div>
-            </a>
-        </div>
-    </div>
+    // Показать кто вошёл (по данным Telegram)
+    const ui = tg?.initDataUnsafe?.user;
+    const hello = document.getElementById('hello');
+    if (ui) {
+      const name = [ui.first_name, ui.last_name].filter(Boolean).join(' ') || ui.username || ('tg:' + ui.id);
+      hello.textContent = `Привет, ${name}!`;
+    } else {
+      hello.textContent = 'Не удалось получить данные Telegram. Откройте мини-апп из чата с ботом.';
+    }
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        let currentUser = null;
+    // 2) Тест получаем гео с устройства (по желанию)
+    let lastGeo = null;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { lastGeo = pos.coords; },
+        () => { /* игнорируем отказ */ },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
 
-        // Инициализация Telegram WebApp
-        tg.ready();
-        tg.expand();
+    // 3) Публикация статуса -> твой серверный эндпоинт (Vercel)
+    const $ = (id) => document.getElementById(id);
+    $('publish').onclick = async () => {
+      const out = $('out');
+      out.textContent = 'Отправка…';
 
-        // Устанавливаем цвета темы
-        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
-        document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
-        document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#0088cc');
-        document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f1f1f1');
+      const payload = {
+        // initData обязательно — сервер проверит подпись
+        initData: tg?.initData || '',
+        icon: $('icon').value,
+        message: $('message').value.trim() || null,
+        location: $('location').value.trim() || null,
+        latitude: lastGeo?.latitude ?? null,
+        longitude: lastGeo?.longitude ?? null,
+      };
 
-        async function initializeProfile() {
-            try {
-                const response = await fetch('/api/tg/upsert-profile', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        initData: tg.initData
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const userData = await response.json();
-                currentUser = userData;
-
-                // Обновляем UI профиля
-                document.getElementById('profile-name').textContent = userData.name || userData.username || 'Пользователь';
-                
-                if (userData.avatar_url) {
-                    document.getElementById('profile-avatar').innerHTML = `<img src="${userData.avatar_url}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-                } else {
-                    document.getElementById('profile-avatar').textContent = (userData.name || userData.username || 'У')[0].toUpperCase();
-                }
-
-                // Показываем меню
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('profile-info').style.display = 'flex';
-                document.getElementById('menu').style.display = 'block';
-
-            } catch (error) {
-                console.error('Error initializing profile:', error);
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('error-message').style.display = 'block';
-                document.getElementById('error-message').textContent = `Ошибка загрузки: ${error.message}`;
-            }
-        }
-
-        // Инициализация при загрузке
-        if (tg.initDataUnsafe?.user) {
-            initializeProfile();
-        } else {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('error-message').style.display = 'block';
-            document.getElementById('error-message').textContent = 'Приложение должно запускаться из Telegram';
-        }
-    </script>
+      try {
+        const res = await fetch('/api/tg/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error?.message || `HTTP ${res.status}`);
+        out.textContent = 'Статус опубликован! Можно закрыть и открыть карту.';
+        // Закрыть мини-апп (по желанию): tg.close();
+      } catch (e) {
+        out.textContent = 'Ошибка: ' + (e?.message || e);
+      }
+    };
+  </script>
 </body>
 </html>
