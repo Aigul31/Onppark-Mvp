@@ -404,23 +404,18 @@ function initializeMap() {
   }, 2000);
 }
 
-// Load statuses from Supabase and display real users on map
+// Load statuses from API and display real users on map  
 async function loadStatuses() {
   try {
-    if (!supabase) {
-      console.log('Supabase не инициализирован, используем заглушки');
-      return;
-    }
-    
-    // Получаем статусы и профили напрямую из Supabase
-    const [statusResult, profilesResult] = await Promise.all([
-      supabase.from('statuses').select('*'),
-      supabase.from('profiles').select('*')
+    // Получаем статусы и профили из API (где фактически сохраняются данные)
+    const [statusResponse, profilesResponse] = await Promise.all([
+      fetch(`${window.APP_CONFIG.API_BASE}/api/status`),
+      fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`)
     ]);
     
-    if (statusResult.data && profilesResult.data) {
-      const statuses = statusResult.data;
-      const profiles = profilesResult.data;
+    if (statusResponse.ok && profilesResponse.ok) {
+      const statuses = await statusResponse.json();
+      const profiles = await profilesResponse.json();
       
       console.log('=== ОТЛАДКА ЗАГРУЗКИ РЕАЛЬНЫХ ПОЛЬЗОВАТЕЛЕЙ ===');
       console.log('Загружено статусов:', statuses.length, statuses);
@@ -463,7 +458,7 @@ async function loadStatuses() {
           return;
         }
         
-        console.log('Создаем маркер для пользователя:', profile.display_name);
+        console.log('Создаем маркер для пользователя:', profile.name || profile.display_name);
         
         const marker = L.marker([status.latitude, status.longitude], {
           icon: getStatusIconMarker(status.icon)
@@ -473,11 +468,11 @@ async function loadStatuses() {
         const popupContent = `
           <div style="text-align: center; min-width: 200px;">
             ${profile.avatar_url ? `<img src="${profile.avatar_url}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">` : ''}
-            <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${profile.display_name}</div>
+            <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${profile.name || profile.display_name}</div>
             <div style="color: #4aa896; margin-bottom: 5px;">${status.message}</div>
             <div style="font-size: 12px; color: #666;">Возраст: ${profile.age}</div>
             ${profile.interests ? `<div style="font-size: 12px; color: #666; margin-top: 5px;">Интересы: ${profile.interests}</div>` : ''}
-            <button onclick="startChat('${status.user_id}', '${profile.display_name}')" 
+            <button onclick="startChat('${status.user_id}', '${profile.name || profile.display_name}')" 
                     style="background: #4aa896; color: white; border: none; border-radius: 15px; 
                            padding: 8px 16px; margin-top: 10px; cursor: pointer; font-size: 14px;">
               Написать
@@ -556,28 +551,8 @@ async function saveStatusToDatabase(latitude, longitude, statusIcon) {
     
     console.log('Сохраняем статус на выбранной локации:', status);
     
-    // Сохраняем через API (как раньше) И напрямую в Supabase для видимости другим пользователям
-    if (supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('statuses')
-          .insert(status)
-          .select();
-        
-        if (data && !error) {
-          console.log('Status saved to Supabase:', data);
-        } else {
-          console.log('Supabase error, using API fallback:', error);
-          // Fallback to API
-          await saveViaAPI(status);
-        }
-      } catch (err) {
-        console.log('Supabase connection failed, using API fallback');
-        await saveViaAPI(status);
-      }
-    } else {
-      await saveViaAPI(status);
-    }
+    // Сохраняем через API (основной способ для консистентности)
+    await saveViaAPI(status);
     
     console.log('Status saved successfully!');
     // Обновляем карту с новыми статусами
