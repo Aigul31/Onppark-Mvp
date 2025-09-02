@@ -442,6 +442,11 @@ const server = http.createServer(async (req, res) => {
     filePath = './index.html';
   }
   
+  // Redirect /tg to /tg/index.html (like Vercel will do)
+  if (pathname === '/tg') {
+    filePath = './public/tg/index.html';
+  }
+  
   // Serve files from public directory for static assets
   if (pathname.startsWith('/tg/') || pathname.startsWith('/assets/') || pathname.startsWith('/favicon.')) {
     filePath = './public' + pathname;
