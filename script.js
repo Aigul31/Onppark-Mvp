@@ -86,7 +86,7 @@ function showStatusHint() {
     `;
     hint.innerHTML = `
       <div style="margin-bottom: 10px;">👆</div>
-      <div>Выберите статус, чтобы писать другим пользователям на карте!</div>
+      <div>Разместите на карте</div>
     `;
     
     // Добавляем CSS анимацию если её нет
@@ -684,7 +684,7 @@ function startStatusPlacement() {
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     animation: bounce 2s infinite;
   `;
-  hint.textContent = '👆 Выберите ваш интерес (кофе, прогулка или путешествие)';
+  hint.textContent = '👆 Разместите на карте';
   document.body.appendChild(hint);
 }
 
@@ -2027,6 +2027,8 @@ setTimeout(initializePendingConnections, 2000);
 
 function openIndividualChat(profile) {
   currentChatUser = profile;
+  // Устанавливаем флаг что это фейковый профиль
+  currentChatUser.isFake = true;
   showScreen('chatScreen');
   
   // Update chat header with user info and photo
@@ -2187,8 +2189,11 @@ async function sendMessage() {
       // Перезагружаем сообщения из базы данных для получения актуальных данных
       await loadChatMessages();
       
-      // Для фейковых пользователей добавляем симуляцию ответа
-      if (currentChatUser.isFake) {
+      // Добавляем симуляцию ответа для всех пользователей (кроме реальных)
+      // Реальные пользователи определяются по наличию user_id в формате user_TIMESTAMP
+      const isRealUser = currentChatUser.id && typeof currentChatUser.id === 'string' && currentChatUser.id.startsWith('user_');
+      
+      if (!isRealUser || currentChatUser.isFake) {
         setTimeout(() => {
           simulateResponse();
         }, 2000);
@@ -2225,11 +2230,11 @@ function addMockMessage(messageText) {
 
 function simulateResponse() {
   const responses = [
-    'Отлично! Где встретимся?',
-    'Согласен! Когда удобно?',
-    'Хорошая идея! Я готов.',
-    'Звучит здорово! Жду встречи.',
-    'Давайте обсудим детали!'
+    'Буду рад встрече',
+    'Когда увидимся',
+    'Где встретимся',
+    'Вау здорово!',
+    'Интересный повод'
   ];
   
   const randomResponse = responses[Math.floor(Math.random() * responses.length)];
