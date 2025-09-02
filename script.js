@@ -409,7 +409,7 @@ async function loadStatuses() {
   try {
     // Получаем статусы и профили из API (где фактически сохраняются данные)
     const [statusResponse, profilesResponse] = await Promise.all([
-      fetch(`${window.APP_CONFIG.API_BASE}/api/status`),
+      fetch(`${window.APP_CONFIG.API_BASE}/api/statuses`),
       fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`)
     ]);
     
@@ -602,7 +602,7 @@ async function saveStatusToDatabase(latitude, longitude, statusIcon) {
 
 // Функция fallback для сохранения через API
 async function saveViaAPI(status) {
-  const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`, {
+  const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/statuses`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(status)
@@ -1042,7 +1042,7 @@ async function addActiveUsers() {
   // Добавляем реальных пользователей если есть
   try {
     // Получаем статусы с координатами
-    const statusResponse = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`);
+    const statusResponse = await fetch(`${window.APP_CONFIG.API_BASE}/api/statuses`);
     const profilesResponse = await fetch(`${window.APP_CONFIG.API_BASE}/api/profiles`);
     
     if (statusResponse.ok && profilesResponse.ok) {
