@@ -5,11 +5,17 @@ module.exports = async (req, res) => {
   const supabase = getAdminClient();
 
   if (req.method === 'GET') {
-    // Получение всех статусов без фильтрации по времени
+    const startTime = Date.now();
+    
+    // Получение статусов с оптимизацией для быстрой загрузки
     const { data, error } = await supabase
       .from('statuses')
       .select('id, user_id, latitude, longitude, icon, message, created_at')
-      .limit(100);
+      .order('created_at', { ascending: false })
+      .limit(50); // Уменьшаем лимит для ускорения
+
+    const responseTime = Date.now() - startTime;
+    console.log(`GET /api/status: ${responseTime}ms, ${data?.length || 0} records`);
 
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json(data);

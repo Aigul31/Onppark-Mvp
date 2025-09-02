@@ -398,10 +398,10 @@ function initializeMap() {
   // Setup filter buttons
   setupUserStatusFilters();
   
-  // Load real users from database with delay for initialization
+  // Load real users from database with shorter delay for better performance
   setTimeout(() => {
     loadStatuses();
-  }, 2000);
+  }, 1000);
 }
 
 // Load statuses from API and display real users on map  
@@ -418,8 +418,12 @@ async function loadStatuses() {
       const profiles = await profilesResponse.json();
       
       console.log('=== ОТЛАДКА ЗАГРУЗКИ РЕАЛЬНЫХ ПОЛЬЗОВАТЕЛЕЙ ===');
-      console.log('Загружено статусов:', statuses.length, statuses);
+      console.log('Загружено статусов:', statuses.length, statuses.slice(0, 3));
       console.log('Загружено профилей:', profiles.length, profiles);
+      
+      // Показываем счетчик статусов пользователю
+      const statusCount = document.getElementById('status-counter') || createStatusCounter();
+      statusCount.textContent = `${statuses.length} статусов на карте`;
       
       // Создаем карту профилей для быстрого поиска
       const profileMap = {};
@@ -441,8 +445,12 @@ async function loadStatuses() {
       statuses.forEach((status, index) => {
         console.log(`Обрабатываем статус ${index}:`, status);
         
-        if (!status.latitude || !status.longitude) {
-          console.log('Пропускаем - нет координат');
+        // Приводим координаты к числам и проверяем валидность
+        const lat = Number(status.latitude);
+        const lng = Number(status.longitude);
+        
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          console.log('Пропускаем - невалидные координаты:', { lat, lng, original: { latitude: status.latitude, longitude: status.longitude } });
           return;
         }
         
@@ -460,7 +468,7 @@ async function loadStatuses() {
         
         console.log('Создаем маркер для пользователя:', profile.name || profile.display_name);
         
-        const marker = L.marker([status.latitude, status.longitude], {
+        const marker = L.marker([lat, lng], {
           icon: getStatusIconMarker(status.icon)
         }).addTo(map);
         
@@ -488,7 +496,33 @@ async function loadStatuses() {
     }
   } catch (error) {
     console.error('Error loading real statuses:', error);
+    // Показываем ошибку в счетчике
+    const statusCount = document.getElementById('status-counter') || createStatusCounter();
+    statusCount.textContent = 'Ошибка загрузки статусов';
+    statusCount.style.color = '#ff5757';
   }
+}
+
+// Создание счетчика статусов
+function createStatusCounter() {
+  const counter = document.createElement('div');
+  counter.id = 'status-counter';
+  counter.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #4aa896;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  `;
+  counter.textContent = 'Загрузка...';
+  document.body.appendChild(counter);
+  return counter;
 }
 
 // Функция для создания иконок статусов для маркеров
@@ -555,10 +589,10 @@ async function saveStatusToDatabase(latitude, longitude, statusIcon) {
     await saveViaAPI(status);
     
     console.log('Status saved successfully!');
-    // Обновляем карту с новыми статусами
+    // Обновляем карту с новыми статусами быстро
     setTimeout(() => {
       loadStatuses();
-    }, 1000);
+    }, 500);
     
   } catch (error) {
     console.error('Error saving status:', error);
