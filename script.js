@@ -2088,6 +2088,8 @@ async function sendMessage() {
   input.value = '';
   
   try {
+    console.log('Отправляем сообщение от', currentUser.id, 'к', currentChatUser.id, ':', messageText);
+    
     // Отправляем через API
     const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/messages`, {
       method: 'POST',
@@ -2104,29 +2106,25 @@ async function sendMessage() {
     const result = await response.json();
     
     if (response.ok) {
-      // Добавляем сообщение в локальный массив
-      const message = {
-        from_user_id: currentUser.id,
-        to_user_id: currentChatUser.id,
-        message: messageText,
-        created_at: new Date().toISOString()
-      };
+      console.log('Сообщение успешно отправлено:', result);
       
-      chatMessages.push(message);
-      renderChatMessages();
+      // Перезагружаем сообщения из базы данных для получения актуальных данных
+      await loadChatMessages();
       
-      // Simulate response after a delay
-      setTimeout(() => {
-        simulateResponse();
-      }, 2000);
+      // Для фейковых пользователей добавляем симуляцию ответа
+      if (currentChatUser.isFake) {
+        setTimeout(() => {
+          simulateResponse();
+        }, 2000);
+      }
     } else {
-      console.error('Error sending message:', result.error);
+      console.error('Ошибка отправки сообщения:', result.error);
       // Fallback to mock message
       addMockMessage(messageText);
     }
     
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.error('Ошибка отправки сообщения:', error);
     addMockMessage(messageText);
   }
 }
