@@ -200,6 +200,66 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     
+    // Инициализация базы данных (POST /api/init-database)
+    if (pathname === '/api/init-database' && req.method === 'POST') {
+      try {
+        const handler = require('./api/init-database.js');
+        const mockRes = {
+          headersSent: false,
+          status: (code) => { 
+            if (!mockRes.headersSent) {
+              res.statusCode = code;
+            }
+            return mockRes; 
+          },
+          json: (data) => { 
+            if (!mockRes.headersSent) {
+              res.setHeader('Content-Type', 'application/json');
+              mockRes.headersSent = true;
+              res.end(JSON.stringify(data));
+            }
+            return mockRes; 
+          }
+        };
+        await handler(req, mockRes);
+      } catch (error) {
+        console.error('Error in database init handler:', error);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Internal server error' }));
+      }
+      return;
+    }
+
+    // Очистка истекших чатов (POST /api/cleanup-expired-chats)
+    if (pathname === '/api/cleanup-expired-chats' && req.method === 'POST') {
+      try {
+        const handler = require('./api/cleanup-expired-chats.js');
+        const mockRes = {
+          headersSent: false,
+          status: (code) => { 
+            if (!mockRes.headersSent) {
+              res.statusCode = code;
+            }
+            return mockRes; 
+          },
+          json: (data) => { 
+            if (!mockRes.headersSent) {
+              res.setHeader('Content-Type', 'application/json');
+              mockRes.headersSent = true;
+              res.end(JSON.stringify(data));
+            }
+            return mockRes; 
+          }
+        };
+        await handler(req, mockRes);
+      } catch (error) {
+        console.error('Error in cleanup handler:', error);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Internal server error' }));
+      }
+      return;
+    }
+
     // Получение сообщений (GET /api/messages?user1=X&user2=Y)
     if (pathname === '/api/messages' && req.method === 'GET') {
       try {

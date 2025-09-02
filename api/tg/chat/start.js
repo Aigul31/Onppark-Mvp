@@ -71,14 +71,18 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Если комнаты нет, создаем новую
+    // Если комнаты нет, создаем новую с временем истечения 12 часов
     if (!room) {
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 12 * 60 * 60 * 1000); // +12 часов
+      
       const { data: newRoom, error: createError } = await supabase
         .from('chat_rooms')
         .insert({
           user1_key,
           user2_key,
-          last_message_at: new Date().toISOString()
+          last_message_at: now.toISOString(),
+          expires_at: expiresAt.toISOString()
         })
         .select('id')
         .single();

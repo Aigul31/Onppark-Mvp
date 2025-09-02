@@ -41,6 +41,19 @@ module.exports = async function handler(req, res) {
     const user = verification.user;
     const userKey = createTelegramUserKey(user.id);
 
+    // Автоматическая очистка истекших чатов
+    const now = new Date().toISOString();
+    const { data: expiredRooms } = await supabase
+      .from('chat_rooms')
+      .select('id')
+      .lt('expires_at', now);
+    
+    if (expiredRooms && expiredRooms.length > 0) {
+      const roomIds = expiredRooms.map(r => r.id);
+      await supabase.from('chat_messages').delete().in('room_id', roomIds);
+      await supabase.from('chat_rooms').delete().in('id', roomIds);
+    }
+
     // Проверяем, что пользователь участник этой комнаты
     const { data: room, error: roomError } = await supabase
       .from('chat_rooms')
