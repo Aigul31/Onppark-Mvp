@@ -12,10 +12,16 @@ class ObjectNotFoundError extends Error {
 // Supabase Storage Service для замены Replit Object Storage
 class SupabaseStorageService {
   constructor() {
-    // Используем обычный клиент с anon key для Storage операций
+    // Используем service_role ключ для полных прав Storage операций
     this.supabase = createClient(
       process.env.SUPABASE_URL || "https://hifwcfptqusvoarbejap.supabase.co",
-      process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpZndjZnB0cXVzdm9hcmJlamFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NTg1MTMsImV4cCI6MjA3MjAzNDUxM30.g971sOhMGkvbVIjh2LC-hD2900OCrkg_FJLgAgdV-es"
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     );
     this.bucketName = 'uploads'; // основной bucket для файлов
   }
