@@ -51,7 +51,73 @@ function showMap() {
     
     // НЕ отправляем статус автоматически - пользователь должен выбрать место на карте
     console.log('Карта инициализирована. Пользователь может выбрать статус и место.');
+    
+    // Показываем уведомление о необходимости выбора статуса для новых пользователей
+    showStatusHint();
   }, 100);
+}
+
+// Показывает подсказку о выборе статуса
+function showStatusHint() {
+  // Проверяем, есть ли у пользователя статус
+  const currentProfile = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
+  
+  // Показываем подсказку только если у пользователя нет активного статуса
+  if (!currentProfile.hasActiveStatus) {
+    const hint = document.createElement('div');
+    hint.id = 'statusHint';
+    hint.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(74, 168, 150, 0.95);
+      color: white;
+      padding: 20px 25px;
+      border-radius: 20px;
+      z-index: 10000;
+      text-align: center;
+      font-weight: bold;
+      font-size: 16px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      animation: fadeInScale 0.3s ease-out;
+      max-width: 280px;
+      line-height: 1.4;
+    `;
+    hint.innerHTML = `
+      <div style="margin-bottom: 10px;">👆</div>
+      <div>Выберите статус, чтобы писать другим пользователям на карте!</div>
+    `;
+    
+    // Добавляем CSS анимацию если её нет
+    if (!document.querySelector('#statusHintStyle')) {
+      const style = document.createElement('style');
+      style.id = 'statusHintStyle';
+      style.textContent = `
+        @keyframes fadeInScale {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+          100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes fadeOutScale {
+          0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(hint);
+    
+    // Автоматически убираем через 3 секунды
+    setTimeout(() => {
+      if (hint.parentNode) {
+        hint.style.animation = 'fadeOutScale 0.3s ease-in';
+        setTimeout(() => {
+          hint.remove();
+        }, 300);
+      }
+    }, 3000);
+  }
 }
 
 function showProfile() {
@@ -799,6 +865,10 @@ async function saveStatusToDatabase(latitude, longitude, statusIcon) {
     await saveViaAPI(status);
     
     console.log('Status saved successfully!');
+    
+    // Устанавливаем флаг активного статуса в профиле
+    const updatedProfileData = { ...profileData, hasActiveStatus: true };
+    localStorage.setItem('onparkProfile', JSON.stringify(updatedProfileData));
     
     // Убираем подсказку о размещении если она есть
     const hint = document.getElementById('status-placement-hint');
