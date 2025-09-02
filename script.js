@@ -163,10 +163,6 @@ document.addEventListener('DOMContentLoaded', function() {
       
       setTimeout(() => {
         showPhoto();
-        // Показываем обязательную подсказку о статусе после регистрации
-        setTimeout(() => {
-          showMandatoryStatusTutorial();
-        }, 1000);
       }, 2000);
     });
   }
@@ -631,7 +627,7 @@ function startChat(userId, userName) {
   // Проверяем есть ли статус у текущего пользователя
   checkUserHasStatus(currentProfile.user_id).then(hasStatus => {
     if (!hasStatus) {
-      // Показываем обязательную подсказку о размещении статуса
+      // Показываем компактное уведомление о размещении статуса
       const statusAlert = document.createElement('div');
       statusAlert.style.cssText = `
         position: fixed;
@@ -639,37 +635,37 @@ function startChat(userId, userName) {
         left: 50%;
         transform: translate(-50%, -50%);
         background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         z-index: 10000;
         text-align: center;
-        max-width: 350px;
+        max-width: 280px;
       `;
       statusAlert.innerHTML = `
-        <div style="font-size: 32px; margin-bottom: 15px;">⚠️</div>
-        <h3 style="margin: 0 0 10px 0; color: #4aa896;">Сначала разместите статус!</h3>
-        <p style="margin: 0 0 20px 0; color: #666;">
-          Чтобы писать другим пользователям, вам нужно разместить свой статус на карте
+        <div style="font-size: 24px; margin-bottom: 8px;">🎯</div>
+        <h4 style="margin: 0 0 8px 0; color: #4aa896; font-size: 16px;">Разместите статус</h4>
+        <p style="margin: 0 0 15px 0; color: #666; font-size: 13px;">
+          Для общения нужен статус на карте
         </p>
         <button onclick="this.parentElement.remove(); startStatusPlacement()" style="
           background: #4aa896;
           color: white;
           border: none;
-          padding: 12px 20px;
-          border-radius: 20px;
+          padding: 8px 16px;
+          border-radius: 15px;
           cursor: pointer;
-          font-size: 14px;
-          margin-right: 10px;
-        ">Разместить статус</button>
+          font-size: 12px;
+          margin-right: 8px;
+        ">Разместить</button>
         <button onclick="this.parentElement.remove()" style="
-          background: #ccc;
+          background: #ddd;
           color: #666;
           border: none;
-          padding: 12px 20px;
-          border-radius: 20px;
+          padding: 8px 16px;
+          border-radius: 15px;
           cursor: pointer;
-          font-size: 14px;
+          font-size: 12px;
         ">Отмена</button>
       `;
       document.body.appendChild(statusAlert);
