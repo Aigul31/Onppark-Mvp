@@ -480,7 +480,7 @@ async function loadStatuses() {
             <div style="color: #4aa896; margin-bottom: 5px;">${status.message}</div>
             <div style="font-size: 12px; color: #666;">Возраст: ${profile.age}</div>
             ${profile.interests ? `<div style="font-size: 12px; color: #666; margin-top: 5px;">Интересы: ${profile.interests}</div>` : ''}
-            <button onclick="startChat('${status.user_id}', '${profile.name || profile.display_name}')" 
+            <button onclick="startChat('${status.user_id}', '${profile.name || profile.display_name}', '${profile.avatar_url || ''}')" 
                     style="background: #4aa896; color: white; border: none; border-radius: 15px; 
                            padding: 8px 16px; margin-top: 10px; cursor: pointer; font-size: 14px;">
               Написать
@@ -614,7 +614,7 @@ function startStatusPlacement() {
 }
 
 // Функция для перехода на страницу сообщений по кнопке "Написать"
-function startChat(userId, userName) {
+function startChat(userId, userName, userAvatar) {
   console.log('Начинаем чат с пользователем:', userName, 'ID:', userId);
   
   // Проверяем, разместил ли текущий пользователь свой статус
@@ -675,14 +675,70 @@ function startChat(userId, userName) {
     // Пользователь разместил статус - переходим на страницу сообщений
     showMessages();
     
-    // Устанавливаем данные чата с выбранным пользователем
-    window.currentChatUser = {
-      id: userId,
-      name: userName
-    };
+    // Добавляем профиль выбранного пользователя в список сообщений
+    addUserToMessagesList(userId, userName, userAvatar);
     
     console.log('Переход на страницу сообщений с пользователем:', userName);
   });
+}
+
+// Добавить пользователя в список сообщений
+function addUserToMessagesList(userId, userName, userAvatar) {
+  const messagesList = document.querySelector('.messages-list');
+  if (!messagesList) return;
+  
+  // Проверяем, нет ли уже этого пользователя в списке
+  const existingUser = messagesList.querySelector(`[data-user-id="${userId}"]`);
+  if (existingUser) {
+    // Подсвечиваем существующий профиль
+    existingUser.style.background = '#e8f5f3';
+    setTimeout(() => {
+      existingUser.style.background = '';
+    }, 2000);
+    return;
+  }
+  
+  // Создаем новый элемент профиля
+  const userElement = document.createElement('div');
+  userElement.className = 'message-item';
+  userElement.setAttribute('data-user-id', userId);
+  userElement.style.cssText = `
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.3s;
+    background: #e8f5f3;
+  `;
+  
+  userElement.innerHTML = `
+    <img src="${userAvatar || 'https://via.placeholder.com/50'}" alt="${userName}" style="
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin-right: 15px;
+      object-fit: cover;
+    ">
+    <div style="flex: 1;">
+      <div style="font-weight: 600; margin-bottom: 5px;">${userName}</div>
+      <div style="color: #666; font-size: 14px;">Нажмите для начала чата</div>
+    </div>
+    <div style="color: #4aa896; font-size: 12px;">Новый</div>
+  `;
+  
+  // Добавляем обработчик клика для перехода в чат
+  userElement.addEventListener('click', () => {
+    showChat(userId, userName);
+  });
+  
+  // Добавляем в начало списка
+  messagesList.insertBefore(userElement, messagesList.firstChild);
+  
+  // Убираем подсветку через 2 секунды
+  setTimeout(() => {
+    userElement.style.background = '';
+  }, 2000);
 }
 
 // Проверка есть ли у пользователя статус
