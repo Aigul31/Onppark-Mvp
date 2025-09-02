@@ -534,19 +534,17 @@ async function loadProfiles() {
   }
 }
 
-// НОВАЯ функция: сохранение статуса с аутентификацией Supabase
+// Сохранение статуса в Supabase без аутентификации
 async function saveStatusToDatabase(latitude, longitude, statusIcon) {
   try {
-    // Проверяем аутентификацию Supabase
-    const { data: session } = await supabase.auth.getSession();
-    if (!session?.session) {
-      // Показываем модалку входа
-      showAuthModal();
+    // Получаем user_id из локального профиля
+    const profileData = JSON.parse(localStorage.getItem('onparkProfile') || '{}');
+    const userId = profileData.user_id;
+    
+    if (!userId) {
+      alert('Сначала создайте профиль');
       return;
     }
-    
-    // Используем реальный user_id из сессии Supabase
-    const userId = session.session.user.id;
     
     const status = {
       user_id: userId,
@@ -556,21 +554,32 @@ async function saveStatusToDatabase(latitude, longitude, statusIcon) {
       message: getStatusMessage(statusIcon)
     };
     
-    console.log('Сохраняем статус для аутентифицированного пользователя:', status);
+    console.log('Сохраняем статус на выбранной локации:', status);
     
-    // Сохраняем напрямую через Supabase
-    const { data, error } = await supabase
-      .from('statuses')
-      .insert(status)
-      .select();
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      alert('Ошибка при сохранении статуса');
-      return;
+    // Сохраняем через API (как раньше) И напрямую в Supabase для видимости другим пользователям
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('statuses')
+          .insert(status)
+          .select();
+        
+        if (data && !error) {
+          console.log('Status saved to Supabase:', data);
+        } else {
+          console.log('Supabase error, using API fallback:', error);
+          // Fallback to API
+          await saveViaAPI(status);
+        }
+      } catch (err) {
+        console.log('Supabase connection failed, using API fallback');
+        await saveViaAPI(status);
+      }
+    } else {
+      await saveViaAPI(status);
     }
     
-    console.log('Status saved successfully via Supabase:', data);
+    console.log('Status saved successfully!');
     // Обновляем карту с новыми статусами
     setTimeout(() => {
       loadStatuses();
@@ -579,6 +588,22 @@ async function saveStatusToDatabase(latitude, longitude, statusIcon) {
   } catch (error) {
     console.error('Error saving status:', error);
     alert('Ошибка при сохранении статуса');
+  }
+}
+
+// Функция fallback для сохранения через API
+async function saveViaAPI(status) {
+  const response = await fetch(`${window.APP_CONFIG.API_BASE}/api/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(status)
+  });
+  
+  if (response.ok) {
+    const data = await response.json();
+    console.log('Status saved via API:', data);
+  } else {
+    throw new Error('API save failed');
   }
 }
 
