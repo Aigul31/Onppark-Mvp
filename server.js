@@ -441,6 +441,11 @@ const server = http.createServer(async (req, res) => {
   if (filePath === './') {
     filePath = './index.html';
   }
+  
+  // Serve files from public directory for static assets
+  if (pathname.startsWith('/tg/') || pathname.startsWith('/assets/') || pathname.startsWith('/favicon.')) {
+    filePath = './public' + pathname;
+  }
 
   const extname = String(path.extname(filePath)).toLowerCase();
   const contentType = mimeTypes[extname] || 'application/octet-stream';
