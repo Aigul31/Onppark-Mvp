@@ -239,6 +239,118 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     
+    // Telegram API endpoints
+    if (pathname.startsWith('/api/tg/')) {
+      try {
+        let handler;
+        
+        if (pathname === '/api/tg/upsert-profile') {
+          handler = require('./api/tg/upsert-profile.js');
+        } else if (pathname === '/api/tg/status') {
+          handler = require('./api/tg/status.js');
+        } else if (pathname === '/api/tg/chat/start') {
+          handler = require('./api/tg/chat/start.js');
+        } else if (pathname.match(/^\/api\/tg\/chat\/room\/[^\/]+\/send$/)) {
+          handler = require('./api/tg/chat/room/[id]/send.js');
+          const roomId = pathname.split('/')[5];
+          req.query = { ...parsedUrl.query, id: roomId };
+        } else if (pathname.match(/^\/api\/tg\/chat\/room\/[^\/]+$/)) {
+          handler = require('./api/tg/chat/room/[id].js');
+          const roomId = pathname.split('/')[5];
+          req.query = { ...parsedUrl.query, id: roomId };
+        }
+        
+        if (handler) {
+          if (req.method === 'POST' || req.method === 'PUT') {
+            let body = '';
+            req.on('data', chunk => {
+              body += chunk.toString();
+            });
+            req.on('end', async () => {
+              try {
+                req.body = JSON.parse(body);
+              } catch (e) {
+                req.body = {};
+              }
+              
+              const mockRes = {
+                headersSent: false,
+                status: (code) => { 
+                  if (!mockRes.headersSent) {
+                    res.statusCode = code;
+                  }
+                  return mockRes; 
+                },
+                json: (data) => { 
+                  if (!mockRes.headersSent) {
+                    res.setHeader('Content-Type', 'application/json');
+                    mockRes.headersSent = true;
+                    res.end(JSON.stringify(data));
+                  }
+                  return mockRes; 
+                },
+                end: (data) => { 
+                  if (!mockRes.headersSent) {
+                    mockRes.headersSent = true;
+                    if (data) res.end(data); else res.end();
+                  }
+                  return mockRes; 
+                },
+                setHeader: (name, value) => { 
+                  if (!mockRes.headersSent) {
+                    res.setHeader(name, value);
+                  }
+                  return mockRes; 
+                }
+              };
+              
+              await handler(req, mockRes);
+            });
+          } else {
+            const mockRes = {
+              headersSent: false,
+              status: (code) => { 
+                if (!mockRes.headersSent) {
+                  res.statusCode = code;
+                }
+                return mockRes; 
+              },
+              json: (data) => { 
+                if (!mockRes.headersSent) {
+                  res.setHeader('Content-Type', 'application/json');
+                  mockRes.headersSent = true;
+                  res.end(JSON.stringify(data));
+                }
+                return mockRes; 
+              },
+              end: (data) => { 
+                if (!mockRes.headersSent) {
+                  mockRes.headersSent = true;
+                  if (data) res.end(data); else res.end();
+                }
+                return mockRes; 
+              },
+              setHeader: (name, value) => { 
+                if (!mockRes.headersSent) {
+                  res.setHeader(name, value);
+                }
+                return mockRes; 
+              }
+            };
+            
+            req.query = parsedUrl.query;
+            await handler(req, mockRes);
+          }
+          return;
+        }
+      } catch (error) {
+        console.error('Error handling Telegram API:', error);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: 'Internal server error' }));
+        return;
+      }
+    }
+
     // 404 для неизвестных API эндпоинтов
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'API endpoint not found' }));
