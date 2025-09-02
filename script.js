@@ -32,6 +32,12 @@ function showPhoto() {
 }
 
 function showInterests() {
+  // Очищаем уведомление о успешной регистрации
+  const resultDiv = document.getElementById('result');
+  if (resultDiv) {
+    resultDiv.innerHTML = '';
+  }
+  
   showScreen('interestsScreen');
 }
 
