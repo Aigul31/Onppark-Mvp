@@ -282,6 +282,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   console.log('OnPark initialized with demo data');
   
+  // Инициализируем реальные чаты из localStorage
+  initializeRealUserChats();
+  
   // Initialize pending connections
   initializePendingConnections();
 });
@@ -661,61 +664,55 @@ function showChat(userId, userName) {
 
 // Добавить пользователя в список сообщений
 function addUserToMessagesList(userId, userName, userAvatar) {
-  const messagesList = document.querySelector('.messages-list');
-  if (!messagesList) return;
-  
-  // Проверяем, нет ли уже этого пользователя в списке
-  const existingUser = messagesList.querySelector(`[data-user-id="${userId}"]`);
-  if (existingUser) {
-    // Подсвечиваем существующий профиль
-    existingUser.style.background = '#e8f5f3';
-    setTimeout(() => {
-      existingUser.style.background = '';
-    }, 2000);
-    return;
+  // Инициализируем глобальный массив реальных чатов, если его нет
+  if (!window.realUserChats) {
+    window.realUserChats = [];
   }
   
-  // Создаем новый элемент профиля
-  const userElement = document.createElement('div');
-  userElement.className = 'message-item';
-  userElement.setAttribute('data-user-id', userId);
-  userElement.style.cssText = `
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-    transition: background 0.3s;
-    background: #e8f5f3;
-  `;
+  // Проверяем, нет ли уже этого пользователя в массиве
+  const existingChatIndex = window.realUserChats.findIndex(chat => chat.userId === userId);
+  if (existingChatIndex === -1) {
+    // Добавляем нового пользователя в массив
+    window.realUserChats.unshift({
+      userId: userId,
+      userName: userName,
+      userAvatar: userAvatar,
+      addedAt: new Date().toISOString()
+    });
+    
+    // Сохраняем в localStorage для персистентности
+    localStorage.setItem('realUserChats', JSON.stringify(window.realUserChats));
+    
+    console.log('Добавлен новый чат с пользователем:', userName, 'Всего чатов:', window.realUserChats.length);
+  } else {
+    // Перемещаем существующий чат в начало списка
+    const existingChat = window.realUserChats.splice(existingChatIndex, 1)[0];
+    window.realUserChats.unshift(existingChat);
+    
+    // Обновляем localStorage
+    localStorage.setItem('realUserChats', JSON.stringify(window.realUserChats));
+    
+    console.log('Обновлен существующий чат с пользователем:', userName);
+  }
   
-  userElement.innerHTML = `
-    <img src="${userAvatar || 'https://via.placeholder.com/50'}" alt="${userName}" style="
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      margin-right: 15px;
-      object-fit: cover;
-    ">
-    <div style="flex: 1;">
-      <div style="font-weight: 600; margin-bottom: 5px;">${userName}</div>
-      <div style="color: #666; font-size: 14px;">Нажмите для начала чата</div>
-    </div>
-    <div style="color: #4aa896; font-size: 12px;">Новый</div>
-  `;
-  
-  // Добавляем обработчик клика для перехода в чат
-  userElement.addEventListener('click', () => {
-    showChat(userId, userName);
-  });
-  
-  // Добавляем в начало списка
-  messagesList.insertBefore(userElement, messagesList.firstChild);
-  
-  // Убираем подсветку через 2 секунды
-  setTimeout(() => {
-    userElement.style.background = '';
-  }, 2000);
+  // Перезагружаем список сообщений чтобы показать изменения
+  loadConfirmedProfiles();
+}
+
+// Инициализация реальных чатов из localStorage при загрузке
+function initializeRealUserChats() {
+  try {
+    const savedChats = localStorage.getItem('realUserChats');
+    if (savedChats) {
+      window.realUserChats = JSON.parse(savedChats);
+      console.log('Загружено', window.realUserChats.length, 'сохраненных чатов');
+    } else {
+      window.realUserChats = [];
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки сохраненных чатов:', error);
+    window.realUserChats = [];
+  }
 }
 
 // Проверка есть ли у пользователя статус
@@ -1429,7 +1426,11 @@ function showMessages() {
 function loadConfirmedProfiles() {
   const messagesList = document.getElementById('messagesList');
   
-  if (confirmedProfiles.length === 0) {
+  // Получаем реальных пользователей из localStorage или глобальной переменной
+  const realChats = window.realUserChats || [];
+  const totalChats = confirmedProfiles.length + realChats.length;
+  
+  if (totalChats === 0) {
     messagesList.innerHTML = `
       <div class="empty-messages">
         <div class="empty-messages-icon">💬</div>
@@ -1445,6 +1446,30 @@ function loadConfirmedProfiles() {
   
   messagesList.innerHTML = '';
   
+  // Сначала добавляем реальных пользователей
+  realChats.forEach(chat => {
+    const messageItem = document.createElement('div');
+    messageItem.className = 'message-item';
+    messageItem.setAttribute('data-user-id', chat.userId);
+    messageItem.onclick = () => showChat(chat.userId, chat.userName);
+    
+    const avatarContent = chat.userAvatar && chat.userAvatar.trim()
+      ? `<img src="${chat.userAvatar}" alt="${chat.userName}" class="message-avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" />`
+      : `<div class="message-avatar" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #f0f0f0; font-size: 20px;">👤</div>`;
+    
+    messageItem.innerHTML = `
+      ${avatarContent}
+      <div class="message-info">
+        <div class="message-name">${chat.userName}</div>
+        <div class="message-preview">Нажмите для начала чата</div>
+      </div>
+      <div class="message-time">Новый</div>
+    `;
+    
+    messagesList.appendChild(messageItem);
+  });
+  
+  // Затем добавляем фейковых пользователей
   confirmedProfiles.forEach(profile => {
     const messageItem = document.createElement('div');
     messageItem.className = 'message-item';
