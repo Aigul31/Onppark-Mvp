@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>onPark — Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, Roboto, Arial, sans-serif; margin: 0; padding: 16px; }
+    .card { border-radius: 16px; padding: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.08); margin-bottom: 16px; }
+    label { display:block; margin: 8px 0 4px; font-size: 14px; opacity: .8; }
+    input, select, textarea, button { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; }
+    button { border: none; font-weight: 600; }
+    .primary { background: #10b981; color: white; }
+    .muted { font-size: 12px; opacity: .7; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>onPark — люди рядом</h2>
+    <div id="hello" class="muted">Инициализация…</div>
+  </div>
+
+  <div class="card">
+    <label>Статус</label>
+    <select id="icon">
+      <option value="coffee">Кофе</option>
+      <option value="walk">Прогулка</option>
+      <option value="travel">Попутчик</option>
+    </select>
+
+    <label>Сообщение (необязательно)</label>
+    <textarea id="message" rows="2" placeholder="Где вы и что предлагаете?"></textarea>
+
+    <label>Локация</label>
+    <input id="location" placeholder="Напр.: Almaty Park" />
+
+    <button id="publish" class="primary" style="margin-top:12px;">Опубликовать статус</button>
+    <div id="out" class="muted"></div>
+  </div>
+
+  <script type="module">
+    // 1) Telegram WebApp init
+    const tg = window.Telegram?.WebApp;
+    tg?.ready();
+    tg?.expand(); // развернуть на весь экран
+
+    // Показать кто вошёл (по данным Telegram)
+    const ui = tg?.initDataUnsafe?.user;
+    const hello = document.getElementById('hello');
+    if (ui) {
+      const name = [ui.first_name, ui.last_name].filter(Boolean).join(' ') || ui.username || ('tg:' + ui.id);
+      hello.textContent = `Привет, ${name}!`;
+    } else {
+      hello.textContent = 'Не удалось получить данные Telegram. Откройте мини-апп из чата с ботом.';
+    }
+
+    // 2) Тест получаем гео с устройства (по желанию)
+    let lastGeo = null;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { lastGeo = pos.coords; },
+        () => { /* игнорируем отказ */ },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+
+    // 3) Публикация статуса -> твой серверный эндпоинт (Vercel)
+    const $ = (id) => document.getElementById(id);
+    $('publish').onclick = async () => {
+      const out = $('out');
+      out.textContent = 'Отправка…';
+
+      const payload = {
+        // initData обязательно — сервер проверит подпись
+        initData: tg?.initData || '',
+        icon: $('icon').value,
+        message: $('message').value.trim() || null,
+        location: $('location').value.trim() || null,
+        latitude: lastGeo?.latitude ?? null,
+        longitude: lastGeo?.longitude ?? null,
+      };
+
+      try {
+        const res = await fetch('/api/tg/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error?.message || `HTTP ${res.status}`);
+        out.textContent = 'Статус опубликован! Можно закрыть и открыть карту.';
+        // Закрыть мини-апп (по желанию): tg.close();
+      } catch (e) {
+        out.textContent = 'Ошибка: ' + (e?.message || e);
+      }
+    };
+  </script>
+</body>
+</html>
