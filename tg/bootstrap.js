@@ -1,39 +1,22 @@
-(async () => {
+(function () {
   try {
     const url = new URL(location.href);
-    // Если добавим ?reset=1 к URL — полностью сбросит локальное состояние
+    // Разовый сброс: https://.../tg?reset=1
     if (url.searchParams.get('reset') === '1') {
-      localStorage.clear();
-      sessionStorage.clear();
-      try { await window?.supabase?.auth?.signOut?.(); } catch (_e) {}
-      // уберём флаг, чтобы не зациклиться
+      try { localStorage.clear(); } catch(_) {}
+      try { sessionStorage.clear(); } catch(_) {}
+      try { window?.supabase?.auth?.signOut?.(); } catch(_) {}
       url.searchParams.delete('reset');
       history.replaceState(null, '', url.toString());
     }
-
-    // Telegram WebApp API (если есть)
-    try { window.Telegram?.WebApp?.ready?.(); } catch (_e) {}
-   // Простейший «гейт»: если нет профиля — на регистрацию
+    // Telegram WebApp (если доступен)
+    try { window.Telegram?.WebApp?.ready?.(); } catch(_) {}
+    // Гейт: если нет профиля — покажем регистрацию
     const profile = JSON.parse(localStorage.getItem('profile') || 'null');
     if (!profile || !profile.user_id) {
-      // функция показа экрана регистрации — подставь свою
       window.showScreen?.('register');
     } else {
       window.showScreen?.('status');
     }
-  } catch (e) {
-    console.error('bootstrap error', e);
-  }
-})();
-EOF   // Простейший «гейт»: если нет профиля — на регистрацию
-    const profile = JSON.parse(localStorage.getItem('profile') || 'null');
-    if (!profile || !profile.user_id) {
-      // функция показа экрана регистрации — подставь свою
-      window.showScreen?.('register');
-    } else {
-      window.showScreen?.('status');
-    }
-  } catch (e) {
-    console.error('bootstrap error', e);
-  }
+  } catch (e) { console.error('bootstrap error', e); }
 })();
