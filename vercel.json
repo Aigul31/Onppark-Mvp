@@ -1,18 +1,6 @@
 {
-  "functions": { "api/**/*.js": { "runtime": "nodejs18.x" } },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/tg",  "destination": "/public/tg/index.html" },
-    { "source": "/tg/", "destination": "/public/tg/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin",  "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
-      ]
-    }
+    { "source": "/tg",  "destination": "/tg/index.html" },
+    { "source": "/tg/", "destination": "/tg/index.html" }
   ]
 }
