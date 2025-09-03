@@ -13,8 +13,19 @@
 
     // Telegram WebApp API (если есть)
     try { window.Telegram?.WebApp?.ready?.(); } catch (_e) {}
-
-    // Простейший «гейт»: если нет профиля — на регистрацию
+   // Простейший «гейт»: если нет профиля — на регистрацию
+    const profile = JSON.parse(localStorage.getItem('profile') || 'null');
+    if (!profile || !profile.user_id) {
+      // функция показа экрана регистрации — подставь свою
+      window.showScreen?.('register');
+    } else {
+      window.showScreen?.('status');
+    }
+  } catch (e) {
+    console.error('bootstrap error', e);
+  }
+})();
+EOF   // Простейший «гейт»: если нет профиля — на регистрацию
     const profile = JSON.parse(localStorage.getItem('profile') || 'null');
     if (!profile || !profile.user_id) {
       // функция показа экрана регистрации — подставь свою
