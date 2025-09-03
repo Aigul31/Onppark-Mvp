@@ -1,101 +1,483 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>onPark — Mini App</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body { font-family: system-ui, -apple-system, Roboto, Arial, sans-serif; margin: 0; padding: 16px; }
-    .card { border-radius: 16px; padding: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.08); margin-bottom: 16px; }
-    label { display:block; margin: 8px 0 4px; font-size: 14px; opacity: .8; }
-    input, select, textarea, button { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; }
-    button { border: none; font-weight: 600; }
-    .primary { background: #10b981; color: white; }
-    .muted { font-size: 12px; opacity: .7; margin-top: 8px; }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OnPark</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
 </head>
+
 <body>
-  <div class="card">
-    <h2>onPark — люди рядом</h2>
-    <div id="hello" class="muted">Инициализация…</div>
+  <div class="mobile-container">
+    <div class="mobile-screen">
+      
+      <!-- Welcome Screen -->
+      <div id="welcomeScreen" class="screen active">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="language-selector-top">
+          <button class="flag-icon-btn" onclick="setLanguage('ru')" title="Русский">
+            🇷🇺
+          </button>
+          <button class="flag-icon-btn" onclick="setLanguage('en')" title="English">
+            🇺🇸
+          </button>
+        </div>
+        
+        <div class="welcome-content">
+          <div class="logo">
+            <span class="logo-icon">🌍</span>
+            <span class="logo-text">nPark</span>
+          </div>
+          
+          <div class="illustration">
+            <div class="coffee-circle">
+              <div class="coffee-cup">☕</div>
+              <div class="person person-1">🚶‍♀️</div>
+              <div class="person person-2">🚶‍♂️</div>
+              <div class="item item-1">🏠</div>
+              <div class="item item-2">🌳</div>
+              <div class="item item-3">🚲</div>
+              <div class="item item-4">👔</div>
+            </div>
+          </div>
+          
+          <div class="welcome-text">
+            <h2 data-i18n="create-connections">Создавай связи</h2>
+            <p data-i18n="make-day-brighter">Сделай свой день ярче!</p>
+          </div>
+          
+          <button class="primary-btn" onclick="showRegistration()" data-i18n="register-btn">Регистрация</button>
+          
+          <div class="login-link">
+            <span data-i18n="have-account">У вас есть аккаунт:</span>
+            <a href="#" onclick="showLogin()" data-i18n="login-link">Войдите</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Registration Screen -->
+      <div id="registrationScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="form-content">
+          <div class="logo-small">
+            <span class="logo-icon">🌍</span>
+            <span class="logo-text">nPark</span>
+          </div>
+          
+          <div class="gender-selection">
+            <div class="gender-option" data-gender="anonymous">
+              <div class="gender-icon">😊</div>
+              <span data-i18n="anonymous">Аноним</span>
+              <div class="radio-btn"></div>
+            </div>
+            <div class="gender-option" data-gender="female">
+              <div class="gender-icon">👩</div>
+              <span data-i18n="female">Женский</span>
+              <div class="radio-btn"></div>
+            </div>
+            <div class="gender-option" data-gender="male">
+              <div class="gender-icon">👨</div>
+              <span data-i18n="male">Мужской</span>
+              <div class="radio-btn"></div>
+            </div>
+          </div>
+          
+          <div class="age-section">
+            <label data-i18n="age-label">Возраст</label>
+            <div class="age-slider">
+              <input type="range" id="ageSlider" min="18" max="65" value="25">
+              <span id="ageValue">25</span>
+            </div>
+          </div>
+          
+          <form id="registrationForm">
+            <input type="text" id="name" placeholder="Имя" data-i18n-placeholder="name-placeholder" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <div class="password-field">
+              <input type="password" id="password" placeholder="Пароль" required>
+              <button type="button" class="show-password" data-i18n="show">Show</button>
+            </div>
+            
+            <div class="forgot-password">
+              <a href="#" onclick="showForgotPassword()" data-i18n="forgot-password">Забыли пароль?</a>
+            </div>
+            
+            <button type="submit" class="primary-btn" data-i18n="create-profile">Создать профиль</button>
+          </form>
+        </div>
+      </div>
+
+
+      <!-- Photo Upload Screen -->
+      <div id="photoScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="photo-upload-content">
+          <div class="photo-placeholder-large" id="photoPreview">
+            <div class="photo-icon">🖼️</div>
+          </div>
+          
+          <div class="photo-actions">
+            <button class="photo-btn" onclick="selectPhoto()" data-i18n="select-from-gallery">Выбрать из галереи</button>
+            <button class="photo-btn secondary" onclick="showInterests()" data-i18n="cancel-btn">ОТМЕНА</button>
+          </div>
+          
+          <input type="file" id="photoInput" accept="image/*" hidden>
+        </div>
+      </div>
+
+      <!-- Interests Screen -->
+      <div id="interestsScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="interests-content">
+          <h2 data-i18n="add-interests">Добавить интересы</h2>
+          
+          <div class="interests-bubbles">
+            <div class="interest-bubble" data-interest="business">Бизнес</div>
+            <div class="interest-bubble selected" data-interest="events">Events</div>
+            <div class="interest-bubble" data-interest="sport">Спорт</div>
+            <div class="interest-bubble" data-interest="content">Сделать Content</div>
+            <div class="interest-bubble selected" data-interest="hiking">Hiking</div>
+            <div class="interest-bubble selected" data-interest="cotravel">co-Travel</div>
+            <div class="interest-bubble selected" data-interest="startup">Стартап</div>
+            <div class="interest-bubble" data-interest="health">ЗОЖ</div>
+            <div class="interest-bubble" data-interest="party">Party</div>
+            <div class="interest-bubble" data-interest="psychology">Психология</div>
+          </div>
+          
+          <button class="primary-btn" onclick="showMap()" data-i18n="continue-btn">Продолжить</button>
+        </div>
+      </div>
+
+      <!-- Map Screen -->
+      <div id="mapScreen" class="screen">
+        <div class="status-bar">
+        </div>
+        
+        <div class="map-header">
+          <!-- Убрана надпись "Выбрать" -->
+        </div>
+        
+        <div class="map-container">
+          <div id="map" class="map-area"></div>
+          
+          <div class="map-filters">
+            <div class="filter-icon disabled" data-filter="all">Все</div>
+            <div class="filter-icon" data-filter="coffee">☕</div>
+            <div class="filter-icon" data-filter="walk">🚶‍♀️</div>
+            <div class="filter-icon" data-filter="travel">✈️</div>
+          </div>
+          
+          <div class="location-btn" onclick="sendStatus()" id="sendButton">
+            <span>📍</span>
+          </div>
+          
+          <button id="sendStatusBtn" class="send-status-btn">Загрузить статус</button>
+          
+          <div class="bottom-nav">
+            <button class="nav-btn" id="chatBtn" onclick="showMessages()">💬</button>
+            <button class="nav-btn" id="notificationsBtn" onclick="showNotifications()">❗</button>
+            <button class="nav-btn" onclick="showProfile()">👤</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Screen -->
+      <div id="profileScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="profile-header">
+          <span data-i18n="profile">Profile</span>
+        </div>
+        
+        <div class="profile-content">
+          <div class="profile-photo">
+            <img src="https://images.unsplash.com/photo-1494790108755-2616c36167e" alt="Profile" id="profileImage">
+          </div>
+          
+          <div class="profile-fields">
+            <div class="profile-field">
+              <span class="field-label" data-i18n="name">Имя</span>
+              <span class="field-value" id="profileName">Ая</span>
+            </div>
+            <div class="profile-field">
+              <span class="field-label">Email:</span>
+              <span class="field-value" id="profileEmail">aigara1993@icloud.com</span>
+            </div>
+            <div class="profile-field">
+              <span class="field-label" data-i18n="age">Возраст</span>
+              <span class="field-value" id="profileAge">25</span>
+            </div>
+            <div class="profile-field">
+              <span class="field-label" data-i18n="interests">Интересы</span>
+              <span class="field-value" id="profileInterests">Events co travel стартап</span>
+            </div>
+            <div class="profile-field">
+              <span class="field-label" data-i18n="password">Пароль</span>
+              <span class="field-value" id="profilePassword">2025AyaS</span>
+            </div>
+          </div>
+          
+          <button class="back-btn-circle" onclick="showMap()">←</button>
+        </div>
+      </div>
+
+      <!-- Notifications Screen -->
+      <div id="notificationsScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="notifications-header">
+          <button class="back-btn" onclick="showMap()">←</button>
+          <h2 data-i18n="notifications">Уведомления</h2>
+        </div>
+        
+        <div class="notifications-content" id="notificationsContent">
+          <!-- Notifications will be dynamically added here -->
+        </div>
+        
+        <div class="bottom-nav">
+          <button class="nav-btn" onclick="showMap()">🗺️</button>
+        </div>
+      </div>
+
+      <!-- Chat Screen -->
+      <div id="chatScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="chat-header">
+          <button class="back-btn" onclick="showMessages()">←</button>
+          <div class="chat-user-info">
+            <span class="chat-avatar" id="chatAvatar">👤</span>
+            <span class="chat-name" id="chatUserName">Пользователь</span>
+          </div>
+          <button class="more-btn">⋮</button>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+          <!-- Messages will be dynamically added here -->
+        </div>
+        
+        <div class="chat-input-container">
+          <input type="text" id="messageInput" data-i18n-placeholder="message-placeholder" placeholder="Написать сообщение..." />
+          <button class="send-btn" onclick="sendMessage()">→</button>
+        </div>
+      </div>
+
+      <!-- Stefan Profile Screen -->
+      <div id="stefanProfileScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="profile-view-header">
+          <h2>Profile</h2>
+        </div>
+        
+        <div class="profile-view-content">
+          <div class="profile-view-avatar">
+            <img src="attached_assets/Stefan-min_1756533746271.png" alt="Stefan" />
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Имя</span>
+            <span class="field-value">Stefan</span>
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Возраст</span>
+            <span class="field-value">36</span>
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Интересы</span>
+            <span class="field-value">Hiking co-travelling</span>
+          </div>
+        </div>
+        
+        <div class="profile-view-back">
+          <button class="back-btn-circle" onclick="showNotifications()">←</button>
+        </div>
+      </div>
+
+      <!-- Алиса Profile Screen -->
+      <div id="aliceProfileScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="profile-view-header">
+          <h2>Profile</h2>
+        </div>
+        
+        <div class="profile-view-content">
+          <div class="profile-view-avatar">
+            <img src="attached_assets/Алиса-min_1756533716406.png" alt="Алиса" />
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Имя</span>
+            <span class="field-value">Алиса</span>
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Возраст</span>
+            <span class="field-value">27</span>
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Интересы</span>
+            <span class="field-value">Walking Nature</span>
+          </div>
+        </div>
+        
+        <div class="profile-view-back">
+          <button class="back-btn-circle" onclick="showNotifications()">←</button>
+        </div>
+      </div>
+
+      <!-- Асем Profile Screen -->
+      <div id="asemProfileScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="profile-view-header">
+          <h2>Profile</h2>
+        </div>
+        
+        <div class="profile-view-content">
+          <div class="profile-view-avatar">
+            <img src="attached_assets/Асем-min_1756533735058.png" alt="Асем" />
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Имя</span>
+            <span class="field-value">Асем</span>
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Возраст</span>
+            <span class="field-value">29</span>
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Интересы</span>
+            <span class="field-value">Coffee Contents</span>
+          </div>
+        </div>
+        
+        <div class="profile-view-back">
+          <button class="back-btn-circle" onclick="showNotifications()">←</button>
+        </div>
+      </div>
+
+      <!-- Саша Profile Screen -->
+      <div id="sashaProfileScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="profile-view-header">
+          <h2>Profile</h2>
+        </div>
+        
+        <div class="profile-view-content">
+          <div class="profile-view-avatar">
+            <img src="attached_assets/Саша-min_1756533740790.jpg" alt="Саша" />
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Имя</span>
+            <span class="field-value">Саша</span>
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Возраст</span>
+            <span class="field-value">40</span>
+          </div>
+          
+          <div class="profile-view-field">
+            <span class="field-label">Интересы</span>
+            <span class="field-value">Business Events</span>
+          </div>
+        </div>
+        
+        <div class="profile-view-back">
+          <button class="back-btn-circle" onclick="showNotifications()">←</button>
+        </div>
+      </div>
+
+      <!-- Messages Screen -->
+      <div id="messagesScreen" class="screen">
+        <div class="status-bar">
+
+        </div>
+        
+        <div class="messages-header">
+          <button class="back-btn" onclick="showMap()">←</button>
+          <span data-i18n="messages">Сообщения</span>
+        </div>
+        
+        <div class="messages-container">
+          <div id="messagesList" class="messages-list">
+            <!-- Confirmed profiles will be loaded here -->
+          </div>
+        </div>
+        
+        <div class="bottom-nav">
+          <button class="nav-btn" id="notificationsBtn" onclick="showNotifications()">❗</button>
+          <button class="nav-btn" onclick="showProfile()">👤</button>
+        </div>
+      </div>
+
+      <!-- Forgot Password Screen -->
+      <div id="forgotPasswordScreen" class="screen">
+        <div class="status-bar"></div>
+        
+        <div class="registration-header">
+          <button class="back-btn" onclick="showRegistration()">←</button>
+          <h2>Восстановление пароля</h2>
+        </div>
+        
+        <div class="registration-content">
+          <p style="margin-bottom: 30px; color: #666; text-align: center;">
+            Введите ваш email для получения ссылки восстановления пароля
+          </p>
+          
+          <form id="forgotPasswordForm">
+            <input type="email" id="recoveryEmail" placeholder="Email" required>
+            <button type="submit" class="primary-btn">Отправить</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="result" class="result-message"></div>
+    </div>
   </div>
 
-  <div class="card">
-    <label>Статус</label>
-    <select id="icon">
-      <option value="coffee">Кофе</option>
-      <option value="walk">Прогулка</option>
-      <option value="travel">Попутчик</option>
-    </select>
-
-    <label>Сообщение (необязательно)</label>
-    <textarea id="message" rows="2" placeholder="Где вы и что предлагаете?"></textarea>
-
-    <label>Локация</label>
-    <input id="location" placeholder="Напр.: Almaty Park" />
-
-    <button id="publish" class="primary" style="margin-top:12px;">Опубликовать статус</button>
-    <div id="out" class="muted"></div>
-  </div>
-
-  <script type="module">
-    // 1) Telegram WebApp init
-    const tg = window.Telegram?.WebApp;
-    tg?.ready();
-    tg?.expand(); // развернуть на весь экран
-
-    // Показать кто вошёл (по данным Telegram)
-    const ui = tg?.initDataUnsafe?.user;
-    const hello = document.getElementById('hello');
-    if (ui) {
-      const name = [ui.first_name, ui.last_name].filter(Boolean).join(' ') || ui.username || ('tg:' + ui.id);
-      hello.textContent = `Привет, ${name}!`;
-    } else {
-      hello.textContent = 'Не удалось получить данные Telegram. Откройте мини-апп из чата с ботом.';
-    }
-
-    // 2) Тест получаем гео с устройства (по желанию)
-    let lastGeo = null;
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => { lastGeo = pos.coords; },
-        () => { /* игнорируем отказ */ },
-        { enableHighAccuracy: true, timeout: 8000 }
-      );
-    }
-
-    // 3) Публикация статуса -> твой серверный эндпоинт (Vercel)
-    const $ = (id) => document.getElementById(id);
-    $('publish').onclick = async () => {
-      const out = $('out');
-      out.textContent = 'Отправка…';
-
-      const payload = {
-        // initData обязательно — сервер проверит подпись
-        initData: tg?.initData || '',
-        icon: $('icon').value,
-        message: $('message').value.trim() || null,
-        location: $('location').value.trim() || null,
-        latitude: lastGeo?.latitude ?? null,
-        longitude: lastGeo?.longitude ?? null,
-      };
-
-      try {
-        const res = await fetch('/api/tg/status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json?.error?.message || `HTTP ${res.status}`);
-        out.textContent = 'Статус опубликован! Можно закрыть и открыть карту.';
-        // Закрыть мини-апп (по желанию): tg.close();
-      } catch (e) {
-        out.textContent = 'Ошибка: ' + (e?.message || e);
-      }
-    };
-  </script>
-  <script src="/tg/bootstrap.js"></script>
+  <script src="script.js"></script>
 </body>
+
 </html>

@@ -1,0 +1,53 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+function verifyInitData(initData: string) {
+  const params = new URLSearchParams(initData);
+  const hash = params.get('hash');
+  if (!hash) return null;
+  const data: string[] = [];
+  for (const [k, v] of params.entries()) if (k !== 'hash') data.push(`${k}=${v}`);
+  data.sort();
+  const check = data.join('\n');
+
+  const secret = crypto.createHash('sha256').update(process.env.TELEGRAM_BOT_TOKEN!, 'utf8').digest();
+  const sig = crypto.createHmac('sha256', secret).update(check).digest('hex');
+  if (sig !== hash) return null;
+
+  const userStr = params.get('user');
+  return userStr ? JSON.parse(userStr) : null; // {id, username, first_name, last_name, photo_url}
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'OPTIONS') return res.setHeader('Access-Control-Allow-Origin','*')
+    .setHeader('Access-Control-Allow-Headers','authorization, x-client-info, apikey, content-type').status(204).end();
+
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  try {
+    const { initData } = req.body ?? {};
+    const tgUser = verifyInitData(initData || '');
+    if (!tgUser) return res.status(401).json({ error: { message: 'Bad Telegram signature' } });
+
+    const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || null;
+
+    const { error } = await supabase.from('profiles').upsert({
+      user_key: `tg:${tgUser.id}`,
+      telegram_id: String(tgUser.id),
+      username: tgUser.username ?? null,
+      name,
+      avatar_url: tgUser.photo_url ?? null,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_key' });
+
+    if (error) throw error;
+    res.setHeader('Access-Control-Allow-Origin','*')
+      .setHeader('Access-Control-Allow-Headers','authorization, x-client-info, apikey, content-type')
+      .status(200).json({ user_key: `tg:${tgUser.id}`, name, username: tgUser.username ?? null });
+  } catch (e:any) {
+    res.status(400).json({ error: { message: e?.message || String(e) } });
+  }
+}

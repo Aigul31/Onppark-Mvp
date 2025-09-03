@@ -1,0 +1,29 @@
+замените все обращения .from('user_status') на .from('statues') в файле api/status.js (и в клиентском коде, если вы отправляете запросы).
+Уберите фильтрацию по created_at или добавьте временную метку.
+В текущем обработчике GET используется фильтр .gte('created_at', twentyFourHoursAgo) и сортировка по created_at
+raw.githubusercontent.com
+. Если в вашей таблице statues нет столбца created_at, либо:
+удалите эти строки и просто возвращайте все записи:
+const { data, error } = await supabase
+  .from('statues')
+  .select('id, latitude, longitude, icon, message')
+  .limit(100);
+или добавьте в таблицу statues поля created_at и updated_at типа timestamp с дефолтным значением now() — тогда фильтрация по времени снова будет возможна.
+Отрегулируйте создание и обновление статуса.
+При вставке статуса (POST) передавайте в тело запроса хотя бы latitude, longitude, icon и message. Код может выглядеть так:
+if (req.method === 'POST') {
+  const { data, error } = await supabase
+    .from('statues')
+    .insert([{ latitude: req.body.latitude, longitude: req.body.longitude, icon: req.body.icon, message: req.body.message }])
+    .select();
+  …
+}
+Для обновления (PUT) убедитесь, что вы передаёте id существующей записи и только те поля, которые нужно изменить. Если вы решили добавить updated_at, обновляйте и его:
+await supabase.from('statues').update({ ...updateData, updated_at: new Date().toISOString() }).eq('id', id)
+Настройте права доступа.
+В Supabase включите RLS для таблицы и создайте политику чтения, чтобы пользователи могли получать статусы. Например:
+alter table public.statues enable row level security;
+create policy "statues_read_auth" on public.statues for select to authenticated using (true);
+— это разрешит всем авторизованным пользователям читать данные из таблицы.
+Проверьте вызовы на фронтенде.
+В клиентском коде, который отправляет статус на сервер (/api/status), убедитесь, что он отправляет latitude, longitude, icon и message в формате JSON. После изменения эндпоинтов и полей нужно обновить и фронтенд.
